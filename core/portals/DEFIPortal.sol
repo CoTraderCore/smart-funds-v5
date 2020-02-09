@@ -9,6 +9,7 @@ contract DEFIPortal {
   CEther public cEther;
   CToken cToken;
   address public Comptroller;
+  address constant private ETH_TOKEN_ADDRESS = address(0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE);
 
   enum CompoundAction { Mint, Withdraw }
 
@@ -38,7 +39,7 @@ contract DEFIPortal {
   */
   function compound(
     address _cAddress,
-    ERC20 _ercAddress,
+    address _ercAddress,
     uint256 _sourceAmount,
     uint _action
   )
@@ -50,21 +51,16 @@ contract DEFIPortal {
      if(_cAddress == address(cEther)){
        require(msg.value == _sourceAmount);
        cEther.mint.value(_sourceAmount)();
-
        // transfer CEther to sender
-       returnAmount = ERC20(cEther).balanceOf(address(this));
-       ERC20(cEther).transfer(msg.sender, returnAmount);
+       returnAmount = _transferRemainingAssetToSender(msg.sender, address(cEther));
      }else{
        // approve erc20
-       _transferFromSenderAndApproveTo(_ercAddress, _sourceAmount, Comptroller);
+       _transferFromSenderAndApproveTo(ERC20(_ercAddress), _sourceAmount, Comptroller);
        cToken = CToken(_cAddress);
-
        // mint
        cToken.mint(_sourceAmount);
-
        // transfer CToken to sender
-       returnAmount = ERC20(cToken).balanceOf(address(this));
-       ERC20(cToken).transfer(msg.sender, returnAmount);
+       returnAmount = _transferRemainingAssetToSender(msg.sender, address(cToken));
      }
     }
     // Action Withdraw
@@ -73,19 +69,14 @@ contract DEFIPortal {
          // approve CEther not erc20!
          _transferFromSenderAndApproveTo(ERC20(_cAddress), _sourceAmount, Comptroller);
          cEther.redeemUnderlying(_sourceAmount);
-
          // transfer ETH to sender
-         returnAmount = address(this).balance;
-         (msg.sender).transfer(returnAmount);
-
+         returnAmount = _transferRemainingAssetToSender(msg.sender, ETH_TOKEN_ADDRESS);
        }else{
          _transferFromSenderAndApproveTo(ERC20(_cAddress), _sourceAmount, Comptroller);
          cToken = CToken(_cAddress);
          cToken.redeemUnderlying(_sourceAmount);
-
-         // transfer ERC20 to sender 
-         returnAmount = _ercAddress.balanceOf(address(this));
-         _ercAddress.transfer(msg.sender, returnAmount);
+         // transfer ERC20 to sender
+         returnAmount = _transferRemainingAssetToSender(msg.sender, _ercAddress);
       }
     }
     else{
@@ -106,5 +97,18 @@ contract DEFIPortal {
     require(_source.transferFrom(msg.sender, address(this), _sourceAmount));
 
     _source.approve(_to, _sourceAmount);
+  }
+
+  // TODO Cut commision and send to registry
+  function _transferRemainingAssetToSender(address sender, address asset)
+  private
+  returns(uint256 amount){
+    if(asset == ETH_TOKEN_ADDRESS){
+      amount = address(this).balance;
+      (msg.sender).transfer(amount);
+    }else{
+      amount = ERC20(asset).balanceOf(address(this));
+      ERC20(asset).transfer(msg.sender, amount);
+    }
   }
 }
