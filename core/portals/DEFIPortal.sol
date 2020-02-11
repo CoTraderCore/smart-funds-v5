@@ -30,7 +30,7 @@ contract DEFIPortal {
     Comptroller = IComptroller(_Comptroller);
   }
 
-  // TEST Methods for borrow 
+  // TEST Methods for borrow
   // _ercAddress - cToken address
   function borrowERCviaETH(uint256 _amount, address _token) external payable{
     require(msg.value == _amount);
@@ -43,20 +43,20 @@ contract DEFIPortal {
 
     cToken.borrow(borrowAmount);
 
-    address underlyingAddress = CToken.underlying();
-    _transferRemainingAssetToSender(msg.sender, _ercAddress);
+    address underlyingAddress = cToken.underlying();
+    _transferRemainingAssetToSender(msg.sender, _token);
     _transferRemainingAssetToSender(msg.sender, underlyingAddress);
   }
 
   // _ercAddress - cToken address
   function borrowETHviaERC(uint256 _amount, address _token) external{
     cToken = CToken(_token);
-    address underlyingAddress = CToken.underlying();
+    address underlyingAddress = cToken.underlying();
 
     // approve erc20 to CToken contract
-    _transferFromSenderAndApproveTo(ERC20(underlyingAddress), _sourceAmount, _token);
+    _transferFromSenderAndApproveTo(ERC20(underlyingAddress), _amount, _token);
     // mint
-    cToken.mint(_sourceAmount);
+    cToken.mint(_amount);
 
     // should calculate by rate
     uint256 borrowAmount = 1;
