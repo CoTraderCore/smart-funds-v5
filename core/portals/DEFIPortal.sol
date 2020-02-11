@@ -56,8 +56,8 @@ contract DEFIPortal {
        // transfer CEther to sender
        returnAmount = _transferRemainingAssetToSender(msg.sender, address(cEther));
      }else{
-       // approve erc20
-       _transferFromSenderAndApproveTo(ERC20(_toAddress), _sourceAmount, address(Comptroller));
+       // approve erc20 to CToken contract
+       _transferFromSenderAndApproveTo(ERC20(_toAddress), _sourceAmount, address(_fromAddress));
        cToken = CToken(_fromAddress);
        // mint
        cToken.mint(_sourceAmount);
@@ -68,14 +68,22 @@ contract DEFIPortal {
 
     // Action Borrow
     else if(_action == uint(CompoundAction.Borrow)){
-      _transferFromSenderAndApproveTo(ERC20(_fromAddress), _sourceAmount, address(Comptroller));
+      // for test transfer all cAssets
+      // TODO transfer by rate 
+      ERC20(_fromAddress).transferFrom(msg.sender, address(this), ERC20(_fromAddress).balanceOf(msg.sender));
+
       if(_toAddress == address(cEther)){
         cEther.borrow(_sourceAmount);
+        // transfer ETH to sender
+        returnAmount = _transferRemainingAssetToSender(msg.sender, ETH_TOKEN_ADDRESS);
       }else{
         cToken = CToken(_toAddress);
         cToken.borrow(_sourceAmount);
+        address underlyingAddress = CToken.underlying();
+        _transferRemainingAssetToSender(msg.sender, underlyingAddress);
       }
       // transfer ERC20 to sender
+      _transferRemainingAssetToSender(msg.sender, _fromAddress);
       returnAmount = _transferRemainingAssetToSender(msg.sender, _toAddress);
     }
 
