@@ -30,82 +30,41 @@ contract DEFIPortal {
     Comptroller = IComptroller(_Comptroller);
   }
 
-  /**
-  * @dev Facilitates for borrow, withdraw, liquidate or mint from Compound
-  *
-  * @param _fromAddress              from token
-  * @param _toAddress                to token, for eth operation just set 0x address
-  * @param _sourceAmount             amount to convert from (in _source token)
-  * @return The amount of _destination received from the trade
-  */
-  function compound(
-    address _fromAddress,
-    address _toAddress,
-    uint256 _sourceAmount,
-    uint _action
-  )
-  external
-  payable
-  returns(uint256 returnAmount){
+  // TEST Methods for borrow 
+  // _ercAddress - cToken address
+  function borrowERCviaETH(uint256 _amount, address _token) external payable{
+    require(msg.value == _amount);
+    cEther.mint.value(_amount)();
 
-   // Action Mint
-   if(_action == uint(CompoundAction.Mint)){
-     if(_fromAddress == address(cEther)){
-       require(msg.value == _sourceAmount);
-       cEther.mint.value(_sourceAmount)();
-       // transfer CEther to sender
-       returnAmount = _transferRemainingAssetToSender(msg.sender, address(cEther));
-     }else{
-       // approve erc20 to CToken contract
-       _transferFromSenderAndApproveTo(ERC20(_toAddress), _sourceAmount, address(_fromAddress));
-       cToken = CToken(_fromAddress);
-       // mint
-       cToken.mint(_sourceAmount);
-       // transfer CToken to sender
-       returnAmount = _transferRemainingAssetToSender(msg.sender, address(cToken));
-     }
-    }
+    cToken = CToken(_token);
 
-    // Action Borrow
-    else if(_action == uint(CompoundAction.Borrow)){
-      // for test transfer all cAssets
-      // TODO transfer by rate 
-      ERC20(_fromAddress).transferFrom(msg.sender, address(this), ERC20(_fromAddress).balanceOf(msg.sender));
+    // should calculate by rate
+    uint256 borrowAmount = 1;
 
-      if(_toAddress == address(cEther)){
-        cEther.borrow(_sourceAmount);
-        // transfer ETH to sender
-        returnAmount = _transferRemainingAssetToSender(msg.sender, ETH_TOKEN_ADDRESS);
-      }else{
-        cToken = CToken(_toAddress);
-        cToken.borrow(_sourceAmount);
-        address underlyingAddress = CToken.underlying();
-        _transferRemainingAssetToSender(msg.sender, underlyingAddress);
-      }
-      // transfer ERC20 to sender
-      _transferRemainingAssetToSender(msg.sender, _fromAddress);
-      returnAmount = _transferRemainingAssetToSender(msg.sender, _toAddress);
-    }
+    cToken.borrow(borrowAmount);
 
-    // Action Withdraw
-    else if(_action == uint(CompoundAction.Withdraw)){
-      // approve CEther not erc20!
-      _transferFromSenderAndApproveTo(ERC20(_fromAddress), _sourceAmount, address(Comptroller));
-      if(_fromAddress == address(cEther)){
-         cEther.redeemUnderlying(_sourceAmount);
-         // transfer ETH to sender
-         returnAmount = _transferRemainingAssetToSender(msg.sender, ETH_TOKEN_ADDRESS);
-       }else{
-         cToken = CToken(_fromAddress);
-         cToken.redeemUnderlying(_sourceAmount);
-         // transfer ERC20 to sender
-         returnAmount = _transferRemainingAssetToSender(msg.sender, _toAddress);
-      }
-    }
-    else{
-      // Unknown type
-       revert();
-     }
+    address underlyingAddress = CToken.underlying();
+    _transferRemainingAssetToSender(msg.sender, _ercAddress);
+    _transferRemainingAssetToSender(msg.sender, underlyingAddress);
+  }
+
+  // _ercAddress - cToken address
+  function borrowETHviaERC(uint256 _amount, address _token) external{
+    cToken = CToken(_token);
+    address underlyingAddress = CToken.underlying();
+
+    // approve erc20 to CToken contract
+    _transferFromSenderAndApproveTo(ERC20(underlyingAddress), _sourceAmount, _token);
+    // mint
+    cToken.mint(_sourceAmount);
+
+    // should calculate by rate
+    uint256 borrowAmount = 1;
+
+    cEther.borrow(borrowAmount);
+
+    _transferRemainingAssetToSender(msg.sender, ETH_TOKEN_ADDRESS);
+    _transferRemainingAssetToSender(msg.sender, _token);
   }
 
   function compoundEnterMarkets(address[] memory cTokens) public {
