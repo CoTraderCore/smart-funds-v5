@@ -1,13 +1,13 @@
 pragma solidity ^0.4.24;
 
-import "./SmartFundCore.sol";
+import "./SmartFundAdvanced.sol";
 import "../interfaces/SmartFundETHInterface.sol";
 
 /*
-  Note: this smart fund inherits smart fund core and make core operations like deposit,
+  Note: this smart fund inherits SmartFundAdvanced and make core operations like deposit,
   calculate fund value etc in ETH
 */
-contract SmartFundETH is SmartFundETHInterface, SmartFundCore {
+contract SmartFundETH is SmartFundETHInterface, SmartFundAdvanced {
   using SafeMath for uint256;
   using SafeERC20 for ERC20;
 
@@ -35,7 +35,7 @@ contract SmartFundETH is SmartFundETHInterface, SmartFundCore {
     address _permittedPoolsAddress,
     address _poolPortalAddress
   )
-  SmartFundCore(
+  SmartFundAdvanced(
     _owner,
     _name,
     _successFee,
@@ -112,7 +112,7 @@ contract SmartFundETH is SmartFundETHInterface, SmartFundCore {
     return ethBalance + tokensValue;
   }
 
-  // return token value in ETH 
+  // return token value in ETH
   function getTokenValue(ERC20 _token) public view returns (uint256) {
     if (_token == ETH_TOKEN_ADDRESS)
       return address(this).balance;
