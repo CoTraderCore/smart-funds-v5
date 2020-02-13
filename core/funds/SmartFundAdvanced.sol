@@ -47,7 +47,8 @@ contract SmartFundAdvanced is SmartFundCore {
     address _poolPortalAddress,
     address _cEther,
     address _Comptroller,
-    address _PriceOracle
+    address _PriceOracle,
+    bool    _isBorrowAbble 
   )
   SmartFundCore(
     _owner,

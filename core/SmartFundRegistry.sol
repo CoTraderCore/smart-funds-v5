@@ -36,6 +36,7 @@ contract SmartFundRegistry is Ownable {
   // Addresses for Compound platform
   address cEther,
   address Comptroller
+  address PriceOracle
 
   // Factories
   SmartFundETHFactoryInterface public smartFundETHFactory;
@@ -57,6 +58,8 @@ contract SmartFundRegistry is Ownable {
   * @param _smartFundUSDFactory          Address of smartFund USD factory
   * @param _cEther                       Address of Compound ETH wrapper
   * @param _Comptroller                  Address of Compound comptroller
+  * @param _PriceOracle                  Address of PriceOracle contract
+  * @param _isBorrowAbble                bool can be set only once
   */
   constructor(
     uint256 _platformFee,
@@ -69,7 +72,8 @@ contract SmartFundRegistry is Ownable {
     address _smartFundETHFactory,
     address _smartFundUSDFactory,
     address _cEther,
-    address _Comptroller
+    address _Comptroller,
+    address _PriceOracle
   ) public {
     platformFee = _platformFee;
     exchangePortalAddress = _exchangePortalAddress;
@@ -82,6 +86,7 @@ contract SmartFundRegistry is Ownable {
     smartFundUSDFactory = SmartFundUSDFactoryInterface(_smartFundUSDFactory);
     cEther = _cEther;
     Comptroller = _Comptroller;
+    PriceOracle = _PriceOracle;
   }
 
   /**
@@ -91,7 +96,12 @@ contract SmartFundRegistry is Ownable {
   * @param _successFee         The fund managers success fee
   * @param _isStableBasedFund  true for USD base fund, false for ETH base
   */
-  function createSmartFund(string _name, uint256 _successFee, bool _isStableBasedFund) public {
+  function createSmartFund(
+    string _name,
+    uint256 _successFee,
+    bool _isStableBasedFund,
+    bool _isBorrowAbble
+  ) public {
     // Require that the funds success fee be less than the maximum allowed amount
     require(_successFee <= maximumSuccessFee);
 
@@ -113,7 +123,9 @@ contract SmartFundRegistry is Ownable {
         poolPortalAddress,
         stableCoinAddress,
         cEther,
-        Comptroller
+        Comptroller,
+        PriceOracle,
+        _isBorrowAbble
       );
     }else{
       // Create ETH Fund
@@ -128,7 +140,9 @@ contract SmartFundRegistry is Ownable {
         address(permittedPools),
         poolPortalAddress,
         cEther,
-        Comptroller
+        Comptroller,
+        PriceOracle,
+        _isBorrowAbble
       );
     }
 
