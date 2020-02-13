@@ -8,7 +8,8 @@ contract SmartFundETHFactoryInterface {
     address _exchangePortalAddress,
     address _permittedExchanges,
     address _permittedPools,
-    address _poolPortalAddress
+    address _poolPortalAddress,
+    bool    _isBorrowAbble
     )
   public
   returns(address);

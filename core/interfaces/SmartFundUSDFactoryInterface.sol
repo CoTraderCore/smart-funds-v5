@@ -10,7 +10,8 @@ contract SmartFundUSDFactoryInterface {
     address _permittedPools,
     address _permittedStabels,
     address _poolPortalAddress,
-    address _stableCoinAddress
+    address _stableCoinAddress,
+    bool    _isBorrowAbble
     )
   public
   returns(address);

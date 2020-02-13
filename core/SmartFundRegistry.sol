@@ -59,7 +59,6 @@ contract SmartFundRegistry is Ownable {
   * @param _cEther                       Address of Compound ETH wrapper
   * @param _Comptroller                  Address of Compound comptroller
   * @param _PriceOracle                  Address of PriceOracle contract
-  * @param _isBorrowAbble                bool can be set only once
   */
   constructor(
     uint256 _platformFee,
@@ -122,9 +121,6 @@ contract SmartFundRegistry is Ownable {
         address(permittedStabels),
         poolPortalAddress,
         stableCoinAddress,
-        cEther,
-        Comptroller,
-        PriceOracle,
         _isBorrowAbble
       );
     }else{
@@ -139,9 +135,6 @@ contract SmartFundRegistry is Ownable {
         address(permittedExchanges),
         address(permittedPools),
         poolPortalAddress,
-        cEther,
-        Comptroller,
-        PriceOracle,
         _isBorrowAbble
       );
     }
