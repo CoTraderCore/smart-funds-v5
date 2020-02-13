@@ -61,41 +61,48 @@ contract SmartFundAdvanced is SmartFundCore {
   }
 
 
-  // TEST Methods for borrow
-  // _ercAddress - cToken address
-  function borrowERCviaETH(uint256 _amount, address _token) external payable{
-    require(msg.value == _amount);
-    cEther.mint.value(_amount)();
-
-    cToken = CToken(_token);
-
-    // should calculate by rate
-    uint256 borrowAmount = 1;
-
-    cToken.borrow(borrowAmount);
-
-    address underlyingAddress = cToken.underlying();
-    _addToken(address(cToken));
-    _addToken(underlyingAddress);
+  // _cToken - cToken address
+  function compoundBorrow(uint256 _amount, address _cToken) external payable{
+    if(_cToken == cEther){
+      cEther.borrow(_amount);
+    }else{
+      cToken = CToken(_cToken);
+      cToken.borrow(borrowAmount);
+      // Add borrowed asset to fund
+      address underlyingAddress = cToken.underlying();
+      _addToken(underlyingAddress);
+    }
   }
 
   // _ercAddress - cToken address
-  function borrowETHviaERC(uint256 _amount, address _token) external{
-    cToken = CToken(_token);
-    address underlyingAddress = cToken.underlying();
-    // mint
-    cToken.mint(_amount);
-
-    // should calculate by rate
-    uint256 borrowAmount = 1;
-
-    cEther.borrow(borrowAmount);
-    _addToken(address(cEther));
+  function compoundMint(uint256 _amount, address _cToken) external payable{
+    if(_cToken == cEther){
+      require(msg.value == _amount);
+      // mint cETH
+      cEther.mint.value(_amount)();
+      // Add cEther
+      _addToken(address(cEther));
+    }else{
+      cToken = CToken(_cToken);
+      // mint cERC
+      cToken.mint(_amount);
+      // Add cToken
+      _addToken(address(_cToken));
+    }
   }
-
-
 
   function compoundEnterMarkets(address[] memory cTokens) public {
     Comptroller.enterMarkets(cTokens);
   }
+
+  function compoundExitMarkets(address cToken) public {
+    Comptroller.exitMarket(cToken);
+  }
+
+  // TODO
+  /*
+  function getRatioForCToken(address _cToken, uint256 _amount) view returns(uint256){
+  return PriceOracle.getUnderlyingPrice(_cToken) * _amount;
+  }
+  */
 }
