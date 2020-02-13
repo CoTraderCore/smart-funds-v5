@@ -1,3 +1,4 @@
+// TODO Desribe methods
 pragma solidity ^0.4.24;
 
 /*
@@ -15,6 +16,8 @@ contract SmartFundAdvanced is SmartFundCore {
   CEther public cEther;
   CToken cToken;
   IComptroller public Comptroller;
+  IPriceOracle public PriceOracle;
+  bool public isBorrowAbble;
 
   /**
   * @dev constructor
@@ -26,9 +29,11 @@ contract SmartFundAdvanced is SmartFundCore {
   * @param _exchangePortalAddress        Address of the initial ExchangePortal contract
   * @param _permittedExchangesAddress    Address of the permittedExchanges contract
   * @param _poolPortalAddress            Address of the initial PoolPortal contract
-  * @param _permittedPoolsAddress         Address of the permittedPool contract
-  * @param _cEther        address of cEther
-  * @param _Comptroller   address of Compound
+  * @param _permittedPoolsAddress        Address of the permittedPool contract
+  * @param _cEther                       Address of cEther
+  * @param _Comptroller                  Address of Compound
+  * @param _PriceOracle                  Address of PriceOracle contract
+  * @param _isBorrowAbble                bool can be set only once
   */
   constructor(
     address _owner,
@@ -41,7 +46,8 @@ contract SmartFundAdvanced is SmartFundCore {
     address _permittedPoolsAddress,
     address _poolPortalAddress,
     address _cEther,
-    address _Comptroller
+    address _Comptroller,
+    address _PriceOracle
   )
   SmartFundCore(
     _owner,
@@ -58,23 +64,12 @@ contract SmartFundAdvanced is SmartFundCore {
   {
     cEther = CEther(_cEther);
     Comptroller = IComptroller(_Comptroller);
+    PriceOracle = IPriceOracle(_PriceOracle);
+    isBorrowAbble = _isBorrowAbble;
   }
 
 
   // _cToken - cToken address
-  function compoundBorrow(uint256 _amount, address _cToken) external payable{
-    if(_cToken == cEther){
-      cEther.borrow(_amount);
-    }else{
-      cToken = CToken(_cToken);
-      cToken.borrow(borrowAmount);
-      // Add borrowed asset to fund
-      address underlyingAddress = cToken.underlying();
-      _addToken(underlyingAddress);
-    }
-  }
-
-  // _ercAddress - cToken address
   function compoundMint(uint256 _amount, address _cToken) external payable{
     if(_cToken == cEther){
       require(msg.value == _amount);
@@ -91,7 +86,44 @@ contract SmartFundAdvanced is SmartFundCore {
     }
   }
 
+  // _amount The number of cTokens to be redeemed
+  function compoundRedeem(uint256 _amount, address _cToken) external payable {
+    if(_cToken == cEther){
+      cEther.redeem(_amount);
+    }else{
+      cToken = CToken(_cToken);
+      cToken.redeem(_amount);
+    }
+  }
+
+  // _cToken - cToken address
+  function compoundBorrow(uint256 _amount, address _cToken) external payable{
+    if(_cToken == cEther){
+      cEther.borrow(_amount);
+    }else{
+      cToken = CToken(_cToken);
+      cToken.borrow(_amount);
+      // Add borrowed asset to fund
+      address underlyingAddress = cToken.underlying();
+      _addToken(underlyingAddress);
+    }
+  }
+
+  // _cToken - cToken address
+  function compoundRepayBorrow(uint256 _amount, address _cToken) external payable {
+    if(_cToken == cEther){
+      require(_amount == msg.sender);
+      cEther.repayBorrow.value(_amount)();
+    }else{
+      cToken = CToken(_cToken);
+      address underlyingAddress = cToken.underlying();
+      ERC20(underlyingAddress).approve(address(_cToken), _amount);
+      cToken.repayBorrow(_amount);
+    }
+  }
+
   function compoundEnterMarkets(address[] memory cTokens) public {
+    require(isBorrowAbble);
     Comptroller.enterMarkets(cTokens);
   }
 
@@ -99,10 +131,9 @@ contract SmartFundAdvanced is SmartFundCore {
     Comptroller.exitMarket(cToken);
   }
 
-  // TODO
-  /*
-  function getRatioForCToken(address _cToken, uint256 _amount) view returns(uint256){
+  // return underlying asset in ETH price * amount
+  function getRatioForCToken(address _cToken, uint256 _amount) public view returns(uint256){
   return PriceOracle.getUnderlyingPrice(_cToken) * _amount;
   }
-  */
+
 }
