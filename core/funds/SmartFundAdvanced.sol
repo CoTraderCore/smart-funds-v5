@@ -75,9 +75,8 @@ contract SmartFundAdvanced is SmartFundCore {
 
 
   // _cToken - cToken address
-  function compoundMint(uint256 _amount, address _cToken) external payable{
+  function compoundMint(uint256 _amount, address _cToken) external onlyOwner{
     if(_cToken == address(cEther)){
-      require(msg.value == _amount);
       // mint cETH
       cEther.mint.value(_amount)();
       // Add cEther
@@ -92,7 +91,7 @@ contract SmartFundAdvanced is SmartFundCore {
   }
 
   // _amount The number of cTokens to be redeemed
-  function compoundRedeem(uint256 _amount, address _cToken) external payable {
+  function compoundRedeem(uint256 _amount, address _cToken) external onlyOwner {
     if(_cToken == address(cEther)){
       cEther.redeem(_amount);
     }else{
@@ -102,7 +101,7 @@ contract SmartFundAdvanced is SmartFundCore {
   }
 
   // _cToken - cToken address
-  function compoundBorrow(uint256 _amount, address _cToken) external payable{
+  function compoundBorrow(uint256 _amount, address _cToken) external onlyOwner{
     if(_cToken == address(cEther)){
       cEther.borrow(_amount);
     }else{
@@ -115,9 +114,8 @@ contract SmartFundAdvanced is SmartFundCore {
   }
 
   // _cToken - cToken address
-  function compoundRepayBorrow(uint256 _amount, address _cToken) external payable {
+  function compoundRepayBorrow(uint256 _amount, address _cToken) external onlyOwner {
     if(_cToken == address(cEther)){
-      require(_amount == msg.value);
       cEther.repayBorrow.value(_amount)();
     }else{
       cToken = CToken(_cToken);
