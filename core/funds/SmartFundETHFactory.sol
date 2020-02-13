@@ -29,7 +29,9 @@ contract SmartFundETHFactory {
       _exchangePortalAddress,
       _permittedExchanges,
       _permittedPools,
-      _poolPortalAddress
+      _poolPortalAddress,
+      _cEther,
+      _Comptroller
     );
 
     return address(smartFundETH);

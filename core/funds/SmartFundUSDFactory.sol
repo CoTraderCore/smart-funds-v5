@@ -33,7 +33,9 @@ contract SmartFundUSDFactory {
       _permittedPools,
       _permittedStabels,
       _poolPortalAddress,
-      _stableCoinAddress
+      _stableCoinAddress,
+      _cEther,
+      _Comptroller
     );
 
     return address(smartFundUSD);

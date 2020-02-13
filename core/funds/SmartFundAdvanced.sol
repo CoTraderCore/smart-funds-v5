@@ -26,7 +26,7 @@ contract SmartFundAdvanced is SmartFundCore {
   * @param _exchangePortalAddress        Address of the initial ExchangePortal contract
   * @param _permittedExchangesAddress    Address of the permittedExchanges contract
   * @param _poolPortalAddress            Address of the initial PoolPortal contract
-  * @param _permittedPoolAddress         Address of the permittedPool contract
+  * @param _permittedPoolsAddress         Address of the permittedPool contract
   * @param _cEther        address of cEther
   * @param _Comptroller   address of Compound
   */
@@ -39,7 +39,7 @@ contract SmartFundAdvanced is SmartFundCore {
     address _exchangePortalAddress,
     address _permittedExchangesAddress,
     address _permittedPoolsAddress,
-    address _poolPortalAddress
+    address _poolPortalAddress,
     address _cEther,
     address _Comptroller
   )
@@ -83,9 +83,6 @@ contract SmartFundAdvanced is SmartFundCore {
   function borrowETHviaERC(uint256 _amount, address _token) external{
     cToken = CToken(_token);
     address underlyingAddress = cToken.underlying();
-
-    // approve erc20 to CToken contract
-    _transferFromSenderAndApproveTo(ERC20(underlyingAddress), _amount, _token);
     // mint
     cToken.mint(_amount);
 

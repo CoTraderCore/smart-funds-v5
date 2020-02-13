@@ -49,7 +49,7 @@ contract SmartFundUSD is SmartFundUSDInterface, SmartFundAdvanced {
     address _permittedPoolsAddress,
     address _permittedStabels,
     address _poolPortalAddress,
-    address _stableCoinAddress
+    address _stableCoinAddress,
     address _cEther,
     address _Comptroller
   )
