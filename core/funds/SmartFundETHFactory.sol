@@ -13,7 +13,9 @@ contract SmartFundETHFactory {
     address _exchangePortalAddress,
     address _permittedExchanges,
     address _permittedPools,
-    address _poolPortalAddress
+    address _poolPortalAddress,
+    address _cEther,
+    address _Comptroller
     )
   public
   returns(address)

@@ -33,6 +33,10 @@ contract SmartFundRegistry is Ownable {
   // Address of stable coin can be set in constructor and changed via function
   address public stableCoinAddress;
 
+  // Addresses for Compound platform
+  address cEther,
+  address Comptroller
+
   // Factories
   SmartFundETHFactoryInterface public smartFundETHFactory;
   SmartFundUSDFactoryInterface public smartFundUSDFactory;
@@ -51,6 +55,8 @@ contract SmartFundRegistry is Ownable {
   * @param _stableCoinAddress            Address of the stable coin
   * @param _smartFundETHFactory          Address of smartFund ETH factory
   * @param _smartFundUSDFactory          Address of smartFund USD factory
+  * @param _cEther                       Address of Compound ETH wrapper
+  * @param _Comptroller                  Address of Compound comptroller
   */
   constructor(
     uint256 _platformFee,
@@ -61,7 +67,9 @@ contract SmartFundRegistry is Ownable {
     address _permittedStabels,
     address _stableCoinAddress,
     address _smartFundETHFactory,
-    address _smartFundUSDFactory
+    address _smartFundUSDFactory,
+    address _cEther,
+    address _Comptroller
   ) public {
     platformFee = _platformFee;
     exchangePortalAddress = _exchangePortalAddress;
@@ -72,6 +80,8 @@ contract SmartFundRegistry is Ownable {
     stableCoinAddress = _stableCoinAddress;
     smartFundETHFactory = SmartFundETHFactoryInterface(_smartFundETHFactory);
     smartFundUSDFactory = SmartFundUSDFactoryInterface(_smartFundUSDFactory);
+    cEther = _cEther;
+    Comptroller = _Comptroller;
   }
 
   /**
@@ -101,10 +111,12 @@ contract SmartFundRegistry is Ownable {
         address(permittedPools),
         address(permittedStabels),
         poolPortalAddress,
-        stableCoinAddress
+        stableCoinAddress,
+        cEther,
+        Comptroller
       );
     }else{
-      // Craete ETH Fund
+      // Create ETH Fund
       smartFund = smartFundETHFactory.createSmartFund(
         owner,
         _name,
@@ -114,7 +126,9 @@ contract SmartFundRegistry is Ownable {
         exchangePortalAddress,
         address(permittedExchanges),
         address(permittedPools),
-        poolPortalAddress
+        poolPortalAddress,
+        cEther,
+        Comptroller
       );
     }
 

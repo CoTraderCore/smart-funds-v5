@@ -18,11 +18,28 @@ contract SmartFundAdvanced is SmartFundCore {
 
   /**
   * @dev constructor
-  *
+  * @param _owner                        Owner of new smart fund
+  * @param _name                         Name of new smart fund
+  * @param _successFee                   Initial success fee
+  * @param _platformFee                  Initial platform fee
+  * @param _platformAddress              Address of smart fund registry
+  * @param _exchangePortalAddress        Address of the initial ExchangePortal contract
+  * @param _permittedExchangesAddress    Address of the permittedExchanges contract
+  * @param _poolPortalAddress            Address of the initial PoolPortal contract
+  * @param _permittedPoolAddress         Address of the permittedPool contract
   * @param _cEther        address of cEther
   * @param _Comptroller   address of Compound
   */
   constructor(
+    address _owner,
+    string  _name,
+    uint256 _successFee,
+    uint256 _platformFee,
+    address _platformAddress,
+    address _exchangePortalAddress,
+    address _permittedExchangesAddress,
+    address _permittedPoolsAddress,
+    address _poolPortalAddress
     address _cEther,
     address _Comptroller
   )
