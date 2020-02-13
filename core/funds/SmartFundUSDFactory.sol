@@ -16,9 +16,6 @@ contract SmartFundUSDFactory {
     address _permittedStabels,
     address _poolPortalAddress,
     address _stableCoinAddress,
-    address _cEther,
-    address _Comptroller,
-    address _PriceOracle,
     bool    _isBorrowAbble
     )
   public
@@ -36,9 +33,6 @@ contract SmartFundUSDFactory {
       _permittedStabels,
       _poolPortalAddress,
       _stableCoinAddress,
-      _cEther,
-      _Comptroller,
-      _PriceOracle,
       _isBorrowAbble
     );
 

@@ -23,9 +23,6 @@ contract SmartFundETH is SmartFundETHInterface, SmartFundAdvanced {
   * @param _permittedExchangesAddress    Address of PermittedExchanges contract
   * @param _permittedPoolsAddress        Address of PermittedPools contract
   * @param _poolPortalAddress            Address of initial pool portal
-  * @param _cEther                       Address of Compound ETH wrapper
-  * @param _Comptroller                  Address of Compound comptroller
-  * @param _PriceOracle                  Address of PriceOracle contract
   * @param _isBorrowAbble                bool can be set only once
   */
   constructor(
@@ -38,9 +35,6 @@ contract SmartFundETH is SmartFundETHInterface, SmartFundAdvanced {
     address _permittedExchangesAddress,
     address _permittedPoolsAddress,
     address _poolPortalAddress,
-    address _cEther,
-    address _Comptroller,
-    address _PriceOracle,
     bool    _isBorrowAbble
   )
   SmartFundAdvanced(
@@ -53,10 +47,7 @@ contract SmartFundETH is SmartFundETHInterface, SmartFundAdvanced {
     _permittedExchangesAddress,
     _permittedPoolsAddress,
     _poolPortalAddress,
-    _cEther,
-    _Comptroller,
-    _PriceOracle,
-    _isBorrowAbble 
+    _isBorrowAbble
   )
   public{}
 

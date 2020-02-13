@@ -14,9 +14,6 @@ contract SmartFundETHFactory {
     address _permittedExchanges,
     address _permittedPools,
     address _poolPortalAddress,
-    address _cEther,
-    address _Comptroller,
-    address _PriceOracle,
     bool    _isBorrowAbble
     )
   public
@@ -32,10 +29,7 @@ contract SmartFundETHFactory {
       _permittedExchanges,
       _permittedPools,
       _poolPortalAddress,
-      _cEther,
-      _Comptroller,
-      _PriceOracle,
-      _isBorrowAbble 
+      _isBorrowAbble
     );
 
     return address(smartFundETH);

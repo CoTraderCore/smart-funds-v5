@@ -34,9 +34,9 @@ contract SmartFundRegistry is Ownable {
   address public stableCoinAddress;
 
   // Addresses for Compound platform
-  address cEther,
-  address Comptroller
-  address PriceOracle
+  address public cEther;
+  address public Comptroller;
+  address public PriceOracle;
 
   // Factories
   SmartFundETHFactoryInterface public smartFundETHFactory;

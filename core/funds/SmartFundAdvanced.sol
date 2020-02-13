@@ -11,6 +11,7 @@ import "../../compound/CEther.sol";
 import "../../compound/CToken.sol";
 import "../../compound/IComptroller.sol";
 import "../../compound/IPriceOracle.sol";
+import "../interfaces/ISmartFundRegistry.sol";
 import "./SmartFundCore.sol";
 
 contract SmartFundAdvanced is SmartFundCore {
@@ -31,9 +32,6 @@ contract SmartFundAdvanced is SmartFundCore {
   * @param _permittedExchangesAddress    Address of the permittedExchanges contract
   * @param _poolPortalAddress            Address of the initial PoolPortal contract
   * @param _permittedPoolsAddress        Address of the permittedPool contract
-  * @param _cEther                       Address of cEther
-  * @param _Comptroller                  Address of Compound
-  * @param _PriceOracle                  Address of PriceOracle contract
   * @param _isBorrowAbble                bool can be set only once
   */
   constructor(
@@ -46,9 +44,6 @@ contract SmartFundAdvanced is SmartFundCore {
     address _permittedExchangesAddress,
     address _permittedPoolsAddress,
     address _poolPortalAddress,
-    address _cEther,
-    address _Comptroller,
-    address _PriceOracle,
     bool    _isBorrowAbble
   )
   SmartFundCore(
@@ -64,9 +59,17 @@ contract SmartFundAdvanced is SmartFundCore {
   )
   public
   {
+    ISmartFundRegistry registry = ISmartFundRegistry(_platformAddress);
+
+    address _cEther = registry.cEther();
     cEther = CEther(_cEther);
+
+    address _Comptroller = registry.Comptroller();
     Comptroller = IComptroller(_Comptroller);
+
+    address _PriceOracle = registry.PriceOracle();
     PriceOracle = IPriceOracle(_PriceOracle);
+
     isBorrowAbble = _isBorrowAbble;
   }
 

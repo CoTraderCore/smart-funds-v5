@@ -35,9 +35,6 @@ contract SmartFundUSD is SmartFundUSDInterface, SmartFundAdvanced {
   * @param _permittedStabels             Address of PermittedStabels contract
   * @param _poolPortalAddress            Address of initial pool portal
   * @param _stableCoinAddress            address of stable coin
-  * @param _cEther                       Address of Compound ETH wrapper
-  * @param _Comptroller                  Address of Compound comptroller
-  * @param _PriceOracle                  Address of PriceOracle contract
   * @param _isBorrowAbble                bool can be set only once
   */
   constructor(
@@ -52,9 +49,6 @@ contract SmartFundUSD is SmartFundUSDInterface, SmartFundAdvanced {
     address _permittedStabels,
     address _poolPortalAddress,
     address _stableCoinAddress,
-    address _cEther,
-    address _Comptroller,
-    address _PriceOracle,
     bool    _isBorrowAbble
   )
   SmartFundAdvanced(
@@ -67,10 +61,7 @@ contract SmartFundUSD is SmartFundUSDInterface, SmartFundAdvanced {
     _permittedExchangesAddress,
     _permittedPoolsAddress,
     _poolPortalAddress,
-    _cEther,
-    _Comptroller,
-    _PriceOracle,
-    _isBorrowAbble 
+    _isBorrowAbble
   )
   public {
     // Initial stable coint interface
