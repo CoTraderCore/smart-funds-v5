@@ -10,6 +10,7 @@ pragma solidity ^0.4.24;
 import "../../compound/CEther.sol";
 import "../../compound/CToken.sol";
 import "../../compound/IComptroller.sol";
+import "../../compound/IPriceOracle.sol";
 import "./SmartFundCore.sol";
 
 contract SmartFundAdvanced is SmartFundCore {
@@ -48,7 +49,7 @@ contract SmartFundAdvanced is SmartFundCore {
     address _cEther,
     address _Comptroller,
     address _PriceOracle,
-    bool    _isBorrowAbble 
+    bool    _isBorrowAbble
   )
   SmartFundCore(
     _owner,
@@ -72,7 +73,7 @@ contract SmartFundAdvanced is SmartFundCore {
 
   // _cToken - cToken address
   function compoundMint(uint256 _amount, address _cToken) external payable{
-    if(_cToken == cEther){
+    if(_cToken == address(cEther)){
       require(msg.value == _amount);
       // mint cETH
       cEther.mint.value(_amount)();
@@ -89,7 +90,7 @@ contract SmartFundAdvanced is SmartFundCore {
 
   // _amount The number of cTokens to be redeemed
   function compoundRedeem(uint256 _amount, address _cToken) external payable {
-    if(_cToken == cEther){
+    if(_cToken == address(cEther)){
       cEther.redeem(_amount);
     }else{
       cToken = CToken(_cToken);
@@ -99,7 +100,7 @@ contract SmartFundAdvanced is SmartFundCore {
 
   // _cToken - cToken address
   function compoundBorrow(uint256 _amount, address _cToken) external payable{
-    if(_cToken == cEther){
+    if(_cToken == address(cEther)){
       cEther.borrow(_amount);
     }else{
       cToken = CToken(_cToken);
@@ -112,8 +113,8 @@ contract SmartFundAdvanced is SmartFundCore {
 
   // _cToken - cToken address
   function compoundRepayBorrow(uint256 _amount, address _cToken) external payable {
-    if(_cToken == cEther){
-      require(_amount == msg.sender);
+    if(_cToken == address(cEther)){
+      require(_amount == msg.value);
       cEther.repayBorrow.value(_amount)();
     }else{
       cToken = CToken(_cToken);
@@ -128,13 +129,13 @@ contract SmartFundAdvanced is SmartFundCore {
     Comptroller.enterMarkets(cTokens);
   }
 
-  function compoundExitMarkets(address cToken) public {
-    Comptroller.exitMarket(cToken);
+  function compoundExitMarkets(address _cToken) public {
+    Comptroller.exitMarket(_cToken);
   }
 
   // return underlying asset in ETH price * amount
   function getRatioForCToken(address _cToken, uint256 _amount) public view returns(uint256){
-  return PriceOracle.getUnderlyingPrice(_cToken) * _amount;
+  return PriceOracle.getUnderlyingPrice(CToken(_cToken)) * _amount;
   }
 
 }
