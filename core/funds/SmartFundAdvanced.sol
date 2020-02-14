@@ -83,6 +83,8 @@ contract SmartFundAdvanced is SmartFundCore {
       _addToken(address(cEther));
     }else{
       cToken = CToken(_cToken);
+      address underlyingAddress = cToken.underlying();
+      ERC20(underlyingAddress).approve(address(_cToken), _amount);
       // mint cERC
       cToken.mint(_amount);
       // Add cToken
