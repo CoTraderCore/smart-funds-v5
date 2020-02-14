@@ -137,8 +137,13 @@ contract SmartFundAdvanced is SmartFundCore {
     }
   }
 
+  // return free ETH equivalent value for compound assets
+  function compoundGetLiquidity() public view returns (uint256 result){
+    (, result, ) = Comptroller.getAccountLiquidity(address(this));
+  }
+
   // return price of cToken in ETH value
-  function getRatioForCToken(address _cToken, uint256 _amount) public view returns(uint256 result){
+  function compoundGetCTokenValue(address _cToken, uint256 _amount) public view returns(uint256 result){
     uint256 exchangeRateCurrent;
     if(_cToken == address(cEther)){
       exchangeRateCurrent = cEther.exchangeRateCurrent();
