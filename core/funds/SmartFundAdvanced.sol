@@ -61,7 +61,7 @@ contract SmartFundAdvanced is SmartFundCore {
   public
   {
     SmartFundRegistry = ISmartFundRegistry(_platformAddress);
-    
+
     address _cEther = SmartFundRegistry.cEther();
     cEther = CEther(_cEther);
 
@@ -95,6 +95,16 @@ contract SmartFundAdvanced is SmartFundCore {
     }else{
       cToken = CToken(_cToken);
       cToken.redeem(_amount);
+    }
+  }
+
+  // _amount The number of underlying asset to be redeemed
+  function compoundRedeemUnderlying(uint256 _amount, address _cToken) external onlyOwner {
+    if(_cToken == address(cEther)){
+      cEther.redeemUnderlying(_amount);
+    }else{
+      cToken = CToken(_cToken);
+      cToken.redeemUnderlying(_amount);
     }
   }
 
