@@ -137,19 +137,16 @@ contract SmartFundAdvanced is SmartFundCore {
     }
   }
 
-  // return underlying asset in ETH price
+  // return price of cToken in ETH value
   function getRatioForCToken(address _cToken, uint256 _amount) public view returns(uint256 result){
-    // get latest PriceOracle address
-    address _PriceOracle = SmartFundRegistry.PriceOracle();
-    PriceOracle = IPriceOracle(_PriceOracle);
-
-    // get result = price * amount
-    if(_amount > 0){
-      uint256 price = PriceOracle.getUnderlyingPrice(CToken(_cToken));
-      result = price.mul(_amount);
+    uint256 exchangeRateCurrent;
+    if(_cToken == address(cEther)){
+      exchangeRateCurrent = cEther.exchangeRateCurrent();
     }else{
-      result = 0;
+      cToken = CToken(_cToken);
+      exchangeRateCurrent = cToken.exchangeRateCurrent();
     }
+    result = exchangeRateCurrent.mul(_amount).div(10000000000000000000000000000);
   }
 
   function compoundEnterMarkets(address[] memory cTokens) public {
