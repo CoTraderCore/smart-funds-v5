@@ -211,6 +211,16 @@ contract SmartFundRegistry is Ownable {
 
 
   /**
+  * @dev Sets new Compound PriceOracle address
+  *
+  * @param _PriceOracle   New PriceOracle address
+  */
+  function setNewPriceOracleAddress(address _PriceOracle) external onlyOwner {
+    PriceOracle = _PriceOracle;
+  }
+
+
+  /**
   * @dev Allows platform to withdraw tokens received as part of the platform fee
   *
   * @param _tokenAddress    Address of the token to be withdrawn

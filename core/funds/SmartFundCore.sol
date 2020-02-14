@@ -83,7 +83,7 @@ contract SmartFundCore is SmartFundOverrideInterface, Ownable, ERC20 {
   // addresses to be able to invest in their fund
   mapping (address => bool) public whitelist;
 
-  uint public version = 4;
+  uint public version = 5;
 
   // the total number of shares in the fund
   uint256 public totalShares = 0;

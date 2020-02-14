@@ -19,6 +19,7 @@ contract SmartFundAdvanced is SmartFundCore {
   CToken cToken;
   IComptroller public Comptroller;
   IPriceOracle public PriceOracle;
+  ISmartFundRegistry public SmartFundRegistry;
   bool public isBorrowAbble;
 
   /**
@@ -59,16 +60,13 @@ contract SmartFundAdvanced is SmartFundCore {
   )
   public
   {
-    ISmartFundRegistry registry = ISmartFundRegistry(_platformAddress);
-
-    address _cEther = registry.cEther();
+    SmartFundRegistry = ISmartFundRegistry(_platformAddress);
+    
+    address _cEther = SmartFundRegistry.cEther();
     cEther = CEther(_cEther);
 
-    address _Comptroller = registry.Comptroller();
+    address _Comptroller = SmartFundRegistry.Comptroller();
     Comptroller = IComptroller(_Comptroller);
-
-    address _PriceOracle = registry.PriceOracle();
-    PriceOracle = IPriceOracle(_PriceOracle);
 
     isBorrowAbble = _isBorrowAbble;
   }
@@ -125,6 +123,19 @@ contract SmartFundAdvanced is SmartFundCore {
     }
   }
 
+  // return underlying asset in ETH price * amount
+  function getRatioForCToken(address _cToken, uint256 _amount) public view returns(uint256 result){
+    // get latest PriceOracle address
+    address _PriceOracle = SmartFundRegistry.PriceOracle();
+    PriceOracle = IPriceOracle(_PriceOracle);
+
+    if(_amount > 0){
+      result = PriceOracle.getUnderlyingPrice(CToken(_cToken)) * _amount;
+    }else{
+      result = 0;
+    }
+  }
+
   function compoundEnterMarkets(address[] memory cTokens) public {
     require(isBorrowAbble);
     Comptroller.enterMarkets(cTokens);
@@ -133,10 +144,4 @@ contract SmartFundAdvanced is SmartFundCore {
   function compoundExitMarkets(address _cToken) public {
     Comptroller.exitMarket(_cToken);
   }
-
-  // return underlying asset in ETH price * amount
-  function getRatioForCToken(address _cToken, uint256 _amount) public view returns(uint256){
-  return PriceOracle.getUnderlyingPrice(CToken(_cToken)) * _amount;
-  }
-
 }
