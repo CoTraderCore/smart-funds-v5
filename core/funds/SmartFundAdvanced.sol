@@ -15,6 +15,8 @@ import "../interfaces/ISmartFundRegistry.sol";
 import "./SmartFundCore.sol";
 
 contract SmartFundAdvanced is SmartFundCore {
+  using SafeMath for uint256;
+
   CEther public cEther;
   CToken cToken;
   IComptroller public Comptroller;
@@ -133,14 +135,16 @@ contract SmartFundAdvanced is SmartFundCore {
     }
   }
 
-  // return underlying asset in ETH price * amount
+  // return underlying asset in ETH price
   function getRatioForCToken(address _cToken, uint256 _amount) public view returns(uint256 result){
     // get latest PriceOracle address
     address _PriceOracle = SmartFundRegistry.PriceOracle();
     PriceOracle = IPriceOracle(_PriceOracle);
 
+    // get result = price * amount
     if(_amount > 0){
-      result = PriceOracle.getUnderlyingPrice(CToken(_cToken)) * _amount;
+      uint256 price = PriceOracle.getUnderlyingPrice(CToken(_cToken));
+      result = price.mul(_amount);
     }else{
       result = 0;
     }
