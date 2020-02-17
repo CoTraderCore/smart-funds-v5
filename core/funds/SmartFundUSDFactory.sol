@@ -15,8 +15,7 @@ contract SmartFundUSDFactory {
     address _permittedPools,
     address _permittedStabels,
     address _poolPortalAddress,
-    address _stableCoinAddress,
-    bool    _isBorrowAbble
+    address _stableCoinAddress
     )
   public
   returns(address)
@@ -32,8 +31,7 @@ contract SmartFundUSDFactory {
       _permittedPools,
       _permittedStabels,
       _poolPortalAddress,
-      _stableCoinAddress,
-      _isBorrowAbble
+      _stableCoinAddress
     );
 
     return address(smartFundUSD);

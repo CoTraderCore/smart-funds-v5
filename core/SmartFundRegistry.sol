@@ -35,8 +35,6 @@ contract SmartFundRegistry is Ownable {
 
   // Addresses for Compound platform
   address public cEther;
-  address public Comptroller;
-  address public PriceOracle;
 
   // Factories
   SmartFundETHFactoryInterface public smartFundETHFactory;
@@ -57,8 +55,6 @@ contract SmartFundRegistry is Ownable {
   * @param _smartFundETHFactory          Address of smartFund ETH factory
   * @param _smartFundUSDFactory          Address of smartFund USD factory
   * @param _cEther                       Address of Compound ETH wrapper
-  * @param _Comptroller                  Address of Compound comptroller
-  * @param _PriceOracle                  Address of PriceOracle contract
   */
   constructor(
     uint256 _platformFee,
@@ -70,9 +66,7 @@ contract SmartFundRegistry is Ownable {
     address _stableCoinAddress,
     address _smartFundETHFactory,
     address _smartFundUSDFactory,
-    address _cEther,
-    address _Comptroller,
-    address _PriceOracle
+    address _cEther
   ) public {
     platformFee = _platformFee;
     exchangePortalAddress = _exchangePortalAddress;
@@ -84,8 +78,6 @@ contract SmartFundRegistry is Ownable {
     smartFundETHFactory = SmartFundETHFactoryInterface(_smartFundETHFactory);
     smartFundUSDFactory = SmartFundUSDFactoryInterface(_smartFundUSDFactory);
     cEther = _cEther;
-    Comptroller = _Comptroller;
-    PriceOracle = _PriceOracle;
   }
 
   /**
@@ -98,8 +90,7 @@ contract SmartFundRegistry is Ownable {
   function createSmartFund(
     string _name,
     uint256 _successFee,
-    bool _isStableBasedFund,
-    bool _isBorrowAbble
+    bool _isStableBasedFund
   ) public {
     // Require that the funds success fee be less than the maximum allowed amount
     require(_successFee <= maximumSuccessFee);
@@ -120,8 +111,7 @@ contract SmartFundRegistry is Ownable {
         address(permittedPools),
         address(permittedStabels),
         poolPortalAddress,
-        stableCoinAddress,
-        _isBorrowAbble
+        stableCoinAddress
       );
     }else{
       // Create ETH Fund
@@ -134,8 +124,7 @@ contract SmartFundRegistry is Ownable {
         exchangePortalAddress,
         address(permittedExchanges),
         address(permittedPools),
-        poolPortalAddress,
-        _isBorrowAbble
+        poolPortalAddress
       );
     }
 
@@ -208,17 +197,6 @@ contract SmartFundRegistry is Ownable {
     require(permittedStabels.permittedAddresses(_stableCoinAddress));
     stableCoinAddress = _stableCoinAddress;
   }
-
-
-  /**
-  * @dev Sets new Compound PriceOracle address
-  *
-  * @param _PriceOracle   New PriceOracle address
-  */
-  function setNewPriceOracleAddress(address _PriceOracle) external onlyOwner {
-    PriceOracle = _PriceOracle;
-  }
-
 
   /**
   * @dev Allows platform to withdraw tokens received as part of the platform fee

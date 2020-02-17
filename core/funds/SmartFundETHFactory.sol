@@ -13,8 +13,7 @@ contract SmartFundETHFactory {
     address _exchangePortalAddress,
     address _permittedExchanges,
     address _permittedPools,
-    address _poolPortalAddress,
-    bool    _isBorrowAbble
+    address _poolPortalAddress
     )
   public
   returns(address)
@@ -28,8 +27,7 @@ contract SmartFundETHFactory {
       _exchangePortalAddress,
       _permittedExchanges,
       _permittedPools,
-      _poolPortalAddress,
-      _isBorrowAbble
+      _poolPortalAddress
     );
 
     return address(smartFundETH);
