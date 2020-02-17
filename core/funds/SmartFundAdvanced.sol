@@ -10,7 +10,6 @@ pragma solidity ^0.4.24;
 import "../../compound/CEther.sol";
 import "../../compound/CToken.sol";
 import "../../compound/IComptroller.sol";
-import "../../compound/IPriceOracle.sol";
 import "../interfaces/ISmartFundRegistry.sol";
 import "./SmartFundCore.sol";
 
@@ -18,9 +17,7 @@ contract SmartFundAdvanced is SmartFundCore {
   using SafeMath for uint256;
 
   CEther public cEther;
-  CToken cToken;
   IComptroller public Comptroller;
-  IPriceOracle public PriceOracle;
   ISmartFundRegistry public SmartFundRegistry;
   bool public isBorrowAbble;
 
@@ -82,7 +79,7 @@ contract SmartFundAdvanced is SmartFundCore {
       // Add cEther
       _addToken(address(cEther));
     }else{
-      cToken = CToken(_cToken);
+      CToken cToken = CToken(_cToken);
       address underlyingAddress = cToken.underlying();
       ERC20(underlyingAddress).approve(address(_cToken), _amount);
       // mint cERC
@@ -97,7 +94,7 @@ contract SmartFundAdvanced is SmartFundCore {
     if(_cToken == address(cEther)){
       cEther.redeem(_amount);
     }else{
-      cToken = CToken(_cToken);
+      CToken cToken = CToken(_cToken);
       cToken.redeem(_amount);
     }
   }
@@ -107,7 +104,7 @@ contract SmartFundAdvanced is SmartFundCore {
     if(_cToken == address(cEther)){
       cEther.redeemUnderlying(_amount);
     }else{
-      cToken = CToken(_cToken);
+      CToken cToken = CToken(_cToken);
       cToken.redeemUnderlying(_amount);
     }
   }
@@ -117,7 +114,7 @@ contract SmartFundAdvanced is SmartFundCore {
     if(_cToken == address(cEther)){
       cEther.borrow(_amount);
     }else{
-      cToken = CToken(_cToken);
+      CToken cToken = CToken(_cToken);
       cToken.borrow(_amount);
       // Add borrowed asset to fund
       address underlyingAddress = cToken.underlying();
@@ -130,14 +127,14 @@ contract SmartFundAdvanced is SmartFundCore {
     if(_cToken == address(cEther)){
       cEther.repayBorrow.value(_amount)();
     }else{
-      cToken = CToken(_cToken);
+      CToken cToken = CToken(_cToken);
       address underlyingAddress = cToken.underlying();
       ERC20(underlyingAddress).approve(address(_cToken), _amount);
       cToken.repayBorrow(_amount);
     }
   }
 
-  // return free ETH equivalent value for compound assets
+  // if manager did borrow, this function return free of debt assets in ETH value
   function compoundGetLiquidity() public view returns (uint256 result){
     (, result, ) = Comptroller.getAccountLiquidity(address(this));
   }
@@ -148,12 +145,38 @@ contract SmartFundAdvanced is SmartFundCore {
     if(_cToken == address(cEther)){
       exchangeRateCurrent = cEther.exchangeRateCurrent();
     }else{
-      cToken = CToken(_cToken);
+      CToken cToken = CToken(_cToken);
       exchangeRateCurrent = cToken.exchangeRateCurrent();
     }
     result = exchangeRateCurrent.mul(_amount).div(10000000000000000000000000000);
   }
 
+  // this function check if curent address has debt or not
+  // if has debt, return free liqudity in ETH, else return
+  // value for all compound assets in array in ETH ratio
+  function compoundCalculateValueForCtokens(
+    address[] memory cTokens,
+    uint256[] memory amounts
+  )
+  public
+  view
+  returns(uint256){
+    uint256 accountLiquidity = compoundGetLiquidity();
+    // if account did bororow return free of debt compound assets
+    if(accountLiquidity > 0){
+      return accountLiquidity;
+    }
+    // else calculate all compound assets
+    else{
+      uint256 balance = 0;
+      for(uint i=0; i < cTokens.length; i++){
+        balance = balance.add(compoundGetCTokenValue(cTokens[i], amounts[i]));
+      }
+      return balance;
+    }
+  }
+
+  // Allow manager start do borrow, leaving assets as collateral
   function compoundEnterMarkets(address[] memory cTokens) public {
     require(isBorrowAbble);
     Comptroller.enterMarkets(cTokens);

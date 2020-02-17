@@ -1,5 +1,3 @@
-pragma solidity ^0.4.24;
-
 contract CToken {
     address public underlying;
     function transfer(address dst, uint256 amount) external returns (bool);
