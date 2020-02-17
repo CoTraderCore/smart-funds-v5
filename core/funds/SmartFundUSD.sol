@@ -130,9 +130,10 @@ contract SmartFundUSD is SmartFundUSDInterface, SmartFundAdvanced {
     // Otherwise, we get the value of all the other tokens in ether via exchangePortal
 
     // Calculate value for ERC20
-    uint cTokensAndETHlength = compoundTokenAddresses.length + 1;
-    address[] memory fromAddresses = new address[](tokenAddresses.length - cTokensAndETHlength);
-    uint256[] memory amounts = new uint256[](tokenAddresses.length - cTokensAndETHlength);
+    // Sub cTokens + ETH + Current USD token
+    uint cTokensUSDAndETHlength = compoundTokenAddresses.length + 2;
+    address[] memory fromAddresses = new address[](tokenAddresses.length - cTokensUSDAndETHlength);
+    uint256[] memory amounts = new uint256[](tokenAddresses.length - cTokensUSDAndETHlength);
 
     // get all ERC20 addresses and balance
     for (uint256 i = 1; i < tokenAddresses.length; i++) {
@@ -142,24 +143,23 @@ contract SmartFundUSD is SmartFundUSDInterface, SmartFundAdvanced {
         amounts[i-1] = ERC20(tokenAddresses[i]).balanceOf(address(this));
       }
     }
-
-    // get compound c tokens in ETH
-    uint256 compoundCTokensValueInETH = compoundGetAllFundCtokensinETH();
-
-    // convert compound c tokens from ETH to USD
-    uint256 compoundCTokensValieInUSD = exchangePortal.getValue(
-      ETH_TOKEN_ADDRESS,
-      stableCoinAddress,
-      compoundCTokensValueInETH);
-
     // Ask the Exchange Portal for the value of all the funds tokens in stable coin
     uint256 tokensValue = exchangePortal.getTotalValue(fromAddresses, amounts, stableCoinAddress);
 
     // Get curernt USD token balance
     uint256 currentUSD = ERC20(stableCoinAddress).balanceOf(address(this));
 
+    // get compound c tokens in ETH
+    uint256 compoundCTokensValueInETH = compoundGetAllFundCtokensinETH();
+
+    // convert compound c tokens from ETH to USD
+    uint256 compoundCTokensValueInUSD = exchangePortal.getValue(
+      ETH_TOKEN_ADDRESS,
+      stableCoinAddress,
+      compoundCTokensValueInETH);
+
     // Sum ETH in USD + Current USD Token + ERC20 in USD + Compound tokens in USD
-    return ethBalance + currentUSD + tokensValue + compoundCTokensValieInUSD;
+    return ethBalance + currentUSD + tokensValue + compoundCTokensValueInUSD;
   }
 
 
