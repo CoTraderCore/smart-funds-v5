@@ -197,8 +197,8 @@ contract SmartFundAdvanced is SmartFundCore {
       uint256[] memory amounts = new uint256[](compoundTokenAddresses.length);
 
       for (uint256 i = 0; i < compoundTokenAddresses.length; i++) {
-        fromAddresses[i-1] = compoundTokenAddresses[i];
-        amounts[i-1] = ERC20(compoundTokenAddresses[i]).balanceOf(address(this));
+        fromAddresses[i] = compoundTokenAddresses[i];
+        amounts[i] = ERC20(compoundTokenAddresses[i]).balanceOf(address(this));
       }
       return compoundCalculateValueForCtokens(fromAddresses, amounts);
     }
