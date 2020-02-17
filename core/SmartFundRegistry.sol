@@ -111,7 +111,8 @@ contract SmartFundRegistry is Ownable {
         address(permittedPools),
         address(permittedStabels),
         poolPortalAddress,
-        stableCoinAddress
+        stableCoinAddress,
+        cEther
       );
     }else{
       // Create ETH Fund
@@ -124,7 +125,8 @@ contract SmartFundRegistry is Ownable {
         exchangePortalAddress,
         address(permittedExchanges),
         address(permittedPools),
-        poolPortalAddress
+        poolPortalAddress,
+        cEther
       );
     }
 

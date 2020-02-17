@@ -11,7 +11,7 @@ contract SmartFundUSDFactoryInterface {
     address _permittedStabels,
     address _poolPortalAddress,
     address _stableCoinAddress,
-    bool    _isBorrowAbble
+    address _cEther
     )
   public
   returns(address);

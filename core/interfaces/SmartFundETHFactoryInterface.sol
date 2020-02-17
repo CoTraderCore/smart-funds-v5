@@ -9,7 +9,7 @@ contract SmartFundETHFactoryInterface {
     address _permittedExchanges,
     address _permittedPools,
     address _poolPortalAddress,
-    bool    _isBorrowAbble
+    address _cEther
     )
   public
   returns(address);

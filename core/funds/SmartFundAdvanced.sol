@@ -30,6 +30,7 @@ contract SmartFundAdvanced is SmartFundCore {
   * @param _permittedExchangesAddress    Address of the permittedExchanges contract
   * @param _poolPortalAddress            Address of the initial PoolPortal contract
   * @param _permittedPoolsAddress        Address of the permittedPool contract
+  * @param _cEther                       Address of the cEther
   */
   constructor(
     address _owner,
@@ -41,7 +42,7 @@ contract SmartFundAdvanced is SmartFundCore {
     address _permittedExchangesAddress,
     address _permittedPoolsAddress,
     address _poolPortalAddress,
-    bool    _isBorrowAbble
+    address _cEther
   )
   SmartFundCore(
     _owner,
@@ -56,9 +57,6 @@ contract SmartFundAdvanced is SmartFundCore {
   )
   public
   {
-    ISmartFundRegistry SmartFundRegistry = ISmartFundRegistry(_platformAddress);
-
-    address _cEther = SmartFundRegistry.cEther();
     cEther = CEther(_cEther);
   }
 
@@ -113,25 +111,23 @@ contract SmartFundAdvanced is SmartFundCore {
   function compoundGetCTokenValue(
     address _cToken
   )
-  public
-  view
-  returns(uint256 result)
+    public
+    view
+    returns(uint256 result)
   {
     result = CToken(_cToken).balanceOfUnderlying(address(this));
   }
 
   // return value for all smart fund cTokens in ETH ratio
   function compoundGetAllFundCtokensinETH()
-  public
-  view
-  returns(uint256)
+    public
+    view
+    returns(uint256)
   {
     if(compoundTokenAddresses.length > 0){
-      address[] memory fromAddresses = new address[](compoundTokenAddresses.length);
       uint256 balance = 0;
-
       for (uint256 i = 0; i < compoundTokenAddresses.length; i++) {
-        balance = balance.add(compoundGetCTokenValue(cTokens[i]));
+        balance = balance.add(compoundGetCTokenValue(compoundTokenAddresses[i]));
       }
       return balance;
     }

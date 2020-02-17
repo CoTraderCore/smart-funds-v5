@@ -23,6 +23,7 @@ contract SmartFundETH is SmartFundETHInterface, SmartFundAdvanced {
   * @param _permittedExchangesAddress    Address of PermittedExchanges contract
   * @param _permittedPoolsAddress        Address of PermittedPools contract
   * @param _poolPortalAddress            Address of initial pool portal
+  * @param _cEther                       Address of the cEther
   */
   constructor(
     address _owner,
@@ -33,7 +34,8 @@ contract SmartFundETH is SmartFundETHInterface, SmartFundAdvanced {
     address _exchangePortalAddress,
     address _permittedExchangesAddress,
     address _permittedPoolsAddress,
-    address _poolPortalAddress
+    address _poolPortalAddress,
+    address _cEther
   )
   SmartFundAdvanced(
     _owner,
@@ -44,7 +46,8 @@ contract SmartFundETH is SmartFundETHInterface, SmartFundAdvanced {
     _exchangePortalAddress,
     _permittedExchangesAddress,
     _permittedPoolsAddress,
-    _poolPortalAddress
+    _poolPortalAddress,
+    _cEther 
   )
   public{}
 
