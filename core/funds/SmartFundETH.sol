@@ -107,8 +107,11 @@ contract SmartFundETH is SmartFundETHInterface, SmartFundAdvanced {
     uint256[] memory amounts = new uint256[](tokenAddresses.length - cTokensAndETHlength);
 
     for (uint256 i = 1; i < tokenAddresses.length; i++) {
-      fromAddresses[i-1] = tokenAddresses[i];
-      amounts[i-1] = ERC20(tokenAddresses[i]).balanceOf(address(this));
+      // No need for cToken
+      if(!isCTOKEN[tokenAddresses[i]]){
+        fromAddresses[i-1] = tokenAddresses[i];
+        amounts[i-1] = ERC20(tokenAddresses[i]).balanceOf(address(this));
+      }
     }
     // Ask the Exchange Portal for the value of all the funds tokens in eth
     uint256 tokensValue = exchangePortal.getTotalValue(fromAddresses, amounts, ETH_TOKEN_ADDRESS);
@@ -141,6 +144,5 @@ contract SmartFundETH is SmartFundETHInterface, SmartFundAdvanced {
       uint256 tokenBalance = _token.balanceOf(address(this));
       return exchangePortal.getValue(_token, ETH_TOKEN_ADDRESS, tokenBalance);
     }
-
   }
 }
