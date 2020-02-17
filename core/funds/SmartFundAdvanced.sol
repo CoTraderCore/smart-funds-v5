@@ -150,8 +150,15 @@ contract SmartFundAdvanced is SmartFundCore {
     (, result, ) = Comptroller.getAccountLiquidity(address(this));
   }
 
-  // return price of cToken in ETH value
-  function compoundGetCTokenValue(address _cToken, uint256 _amount) public view returns(uint256 result){
+  // return price of input amount of cToken in ETH ratio
+  function compoundGetCTokenValueByInput(
+    address _cToken,
+    uint256 _amount
+  )
+  public
+  view
+  returns(uint256 result)
+  {
     uint256 exchangeRateCurrent;
     if(_cToken == address(cEther)){
       exchangeRateCurrent = cEther.exchangeRateCurrent();
@@ -162,16 +169,27 @@ contract SmartFundAdvanced is SmartFundCore {
     result = exchangeRateCurrent.mul(_amount).div(10000000000000000000000000000);
   }
 
+  // convert cToken fund balance in ETH ratio
+  function compoundGetCTokenValue(
+    address _cToken
+  )
+  public
+  view
+  returns(uint256 result)
+  {
+    result = CToken(_cToken).balanceOfUnderlying(address(this));
+  }
+
   // this function check if curent address has debt or not
   // if has debt, return free liqudity in ETH, else return
   // value for all compound assets in array in ETH ratio
   function compoundCalculateValueForCtokens(
-    address[] memory cTokens,
-    uint256[] memory amounts
+    address[] memory cTokens
   )
   public
   view
-  returns(uint256){
+  returns(uint256)
+  {
     uint256 accountLiquidity = compoundGetLiquidity();
     // if account did bororow return free of debt compound assets
     if(accountLiquidity > 0){
@@ -181,7 +199,7 @@ contract SmartFundAdvanced is SmartFundCore {
     else{
       uint256 balance = 0;
       for(uint i=0; i < cTokens.length; i++){
-        balance = balance.add(compoundGetCTokenValue(cTokens[i], amounts[i]));
+        balance = balance.add(compoundGetCTokenValue(cTokens[i]));
       }
       return balance;
     }
@@ -191,16 +209,14 @@ contract SmartFundAdvanced is SmartFundCore {
   function compoundGetAllFundCtokensinETH()
   public
   view
-  returns(uint256){
+  returns(uint256)
+  {
     if(compoundTokenAddresses.length > 0){
       address[] memory fromAddresses = new address[](compoundTokenAddresses.length);
-      uint256[] memory amounts = new uint256[](compoundTokenAddresses.length);
-
       for (uint256 i = 0; i < compoundTokenAddresses.length; i++) {
         fromAddresses[i] = compoundTokenAddresses[i];
-        amounts[i] = ERC20(compoundTokenAddresses[i]).balanceOf(address(this));
       }
-      return compoundCalculateValueForCtokens(fromAddresses, amounts);
+      return compoundCalculateValueForCtokens(fromAddresses);
     }
     else{
       return 0;

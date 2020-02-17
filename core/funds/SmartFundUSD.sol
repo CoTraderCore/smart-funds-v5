@@ -185,7 +185,7 @@ contract SmartFundUSD is SmartFundUSDInterface, SmartFundAdvanced {
     // get cToken in USD
     else if(isCTOKEN[_token]){
       // get cToken in ETH
-      uint256 ctokenInETH = compoundGetCTokenValue(_token, _token.balanceOf(address(this)));
+      uint256 ctokenInETH = compoundGetCTokenValue(_token);
       // return cToken in USD
       return exchangePortal.getValue(ETH_TOKEN_ADDRESS, stableCoinAddress, ctokenInETH);
     }
