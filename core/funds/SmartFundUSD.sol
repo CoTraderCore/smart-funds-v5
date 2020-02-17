@@ -130,17 +130,27 @@ contract SmartFundUSD is SmartFundUSDInterface, SmartFundAdvanced {
     // Otherwise, we get the value of all the other tokens in ether via exchangePortal
 
     // Calculate value for ERC20
-    address[] memory fromAddresses = new address[](tokenAddresses.length - 1);
-    uint256[] memory amounts = new uint256[](tokenAddresses.length - 1);
+    uint cTokensAndETHlength = compoundTokenAddresses.length + 1;
+    address[] memory fromAddresses = new address[](tokenAddresses.length - cTokensAndETHlength);
+    uint256[] memory amounts = new uint256[](tokenAddresses.length - cTokensAndETHlength);
 
     // get all ERC20 addresses and balance
     for (uint256 i = 1; i < tokenAddresses.length; i++) {
-      // no need get current USD token
-      if(tokenAddresses[i] != stableCoinAddress){
+      // no need get current USD token and cTokens
+      if(tokenAddresses[i] != stableCoinAddress || !isCTOKEN[tokenAddresses[i]]){
         fromAddresses[i-1] = tokenAddresses[i];
         amounts[i-1] = ERC20(tokenAddresses[i]).balanceOf(address(this));
       }
     }
+
+    // get compound c tokens in ETH
+    uint256 compoundCTokensValueInETH = compoundGetAllFundCtokensinETH();
+
+    // convert compound c tokens from ETH to USD
+    uint256 compoundCTokensValieInUSD = exchangePortal.getValue(
+      ETH_TOKEN_ADDRESS,
+      stableCoinAddress,
+      compoundCTokensValueInETH);
 
     // Ask the Exchange Portal for the value of all the funds tokens in stable coin
     uint256 tokensValue = exchangePortal.getTotalValue(fromAddresses, amounts, stableCoinAddress);
@@ -148,11 +158,18 @@ contract SmartFundUSD is SmartFundUSDInterface, SmartFundAdvanced {
     // Get curernt USD token balance
     uint256 currentUSD = ERC20(stableCoinAddress).balanceOf(address(this));
 
-    // Sum ETH in USD + Current USD Token + ERC20 in USD
-    return ethBalance + currentUSD + tokensValue;
+    // Sum ETH in USD + Current USD Token + ERC20 in USD + Compound tokens in USD
+    return ethBalance + currentUSD + tokensValue + compoundCTokensValieInUSD;
   }
 
-  // return value in stable
+
+  /**
+  * @dev get balance of input asset address in USD ratio
+  *
+  * @param _token     token address
+  *
+  * @return balance in usd
+  */
   function getTokenValue(ERC20 _token) public view returns (uint256) {
     // get ETH in USD
     if (_token == ETH_TOKEN_ADDRESS){
@@ -164,6 +181,13 @@ contract SmartFundUSD is SmartFundUSDInterface, SmartFundAdvanced {
     // get current USD
     else if(_token == ERC20(stableCoinAddress)){
       return _token.balanceOf(address(this));
+    }
+    // get cToken in USD
+    else if(isCTOKEN[_token]){
+      // get cToken in ETH
+      uint256 ctokenInETH = compoundGetCTokenValue(_token, _token.balanceOf(address(this)));
+      // return cToken in USD
+      return exchangePortal.getValue(ETH_TOKEN_ADDRESS, stableCoinAddress, ctokenInETH);
     }
     // get ERC20 in USD
     else{

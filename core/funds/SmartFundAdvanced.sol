@@ -20,6 +20,9 @@ contract SmartFundAdvanced is SmartFundCore {
   IComptroller public Comptroller;
   ISmartFundRegistry public SmartFundRegistry;
   bool public isBorrowAbble;
+  mapping(address => bool) public isCTOKEN;
+  address[] public compoundTokenAddresses;
+
 
   /**
   * @dev constructor
@@ -78,6 +81,10 @@ contract SmartFundAdvanced is SmartFundCore {
       cEther.mint.value(_amount)();
       // Add cEther
       _addToken(address(cEther));
+      // Mark this tokens as Ctoken
+      isCTOKEN[address(cEther)] = true;
+      // Add compound token
+      compoundTokenAddresses.push(address(cEther));
     }else{
       CToken cToken = CToken(_cToken);
       address underlyingAddress = cToken.underlying();
@@ -85,7 +92,11 @@ contract SmartFundAdvanced is SmartFundCore {
       // mint cERC
       cToken.mint(_amount);
       // Add cToken
-      _addToken(address(_cToken));
+      _addToken(_cToken);
+      // Mark this tokens as Ctoken
+      isCTOKEN[_cToken] = true;
+      // Add compound token
+      compoundTokenAddresses.push(_cToken);
     }
   }
 
@@ -173,6 +184,26 @@ contract SmartFundAdvanced is SmartFundCore {
         balance = balance.add(compoundGetCTokenValue(cTokens[i], amounts[i]));
       }
       return balance;
+    }
+  }
+
+  // return value for all smart fund cTokens in ETH ratio
+  function compoundGetAllFundCtokensinETH()
+  public
+  view
+  returns(uint256){
+    if(compoundTokenAddresses.length > 0){
+      address[] memory fromAddresses = new address[](compoundTokenAddresses.length);
+      uint256[] memory amounts = new uint256[](compoundTokenAddresses.length);
+
+      for (uint256 i = 0; i < compoundTokenAddresses.length; i++) {
+        fromAddresses[i-1] = compoundTokenAddresses[i];
+        amounts[i-1] = ERC20(compoundTokenAddresses[i]).balanceOf(address(this));
+      }
+      return compoundCalculateValueForCtokens(fromAddresses, amounts);
+    }
+    else{
+      return 0;
     }
   }
 

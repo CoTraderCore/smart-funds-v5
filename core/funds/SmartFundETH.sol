@@ -111,16 +111,34 @@ contract SmartFundETH is SmartFundETHInterface, SmartFundAdvanced {
     // Ask the Exchange Portal for the value of all the funds tokens in eth
     uint256 tokensValue = exchangePortal.getTotalValue(fromAddresses, amounts, ETH_TOKEN_ADDRESS);
 
-    // Sum ETH + ERC20
-    return ethBalance + tokensValue;
+    // get compound c tokens in ETH
+    uint256 compoundCTokensValueInETH = compoundGetAllFundCtokensinETH();
+
+    // Sum ETH + ERC20 + cTokens
+    return ethBalance + tokensValue + compoundCTokensValueInETH;
   }
 
-  // return token value in ETH
+  /**
+  * @dev get balance of input asset address in ETH ratio
+  *
+  * @param _token     token address
+  *
+  * @return balance in ETH
+  */
   function getTokenValue(ERC20 _token) public view returns (uint256) {
-    if (_token == ETH_TOKEN_ADDRESS)
+    // return ETH
+    if (_token == ETH_TOKEN_ADDRESS){
       return address(this).balance;
-    uint256 tokenBalance = _token.balanceOf(address(this));
+    }
+    // return CToken in ETH
+    else if(isCTOKEN[_token]){
+      return compoundGetCTokenValue(_token, _token.balanceOf(address(this)));
+    }
+    // return ERC20 in ETH
+    else{
+      uint256 tokenBalance = _token.balanceOf(address(this));
+      return exchangePortal.getValue(_token, ETH_TOKEN_ADDRESS, tokenBalance);
+    }
 
-    return exchangePortal.getValue(_token, ETH_TOKEN_ADDRESS, tokenBalance);
   }
 }
