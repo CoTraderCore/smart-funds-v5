@@ -1,12 +1,14 @@
 # smart-funds-v5
 
 
-
 ```
+Updates
+1) Add Compound loan
+2) Add Uniswap pools
+
+
 TODO
-Add Compound support
-
-
-NOTE
-Gas limit should be min 6000000 for ETH and USD factory
+1) Finish uniswap pool rate
+2) Take into account Uniswap pools in fund assets
+3) Descibe methods 
 ```
