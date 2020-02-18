@@ -153,8 +153,9 @@ contract PoolPortal {
       // transfer pool token back to smart fund
       ERC20(_poolToken).transfer(msg.sender, poolAmount);
       // transfer ERC20 remains
-      if(ERC20(tokenAddress).balanceOf(address(this) > 0))
-          ERC20(tokenAddress).transfer(msg.sender, balanceOf(address(this));
+      uint256 remainsERC = ERC20(tokenAddress).balanceOf(address(this));
+      if(remainsERC > 0)
+          ERC20(tokenAddress).transfer(msg.sender, remainsERC);
     }else{
       // throw if such pool not Exist in Uniswap network
       revert();
@@ -273,7 +274,7 @@ contract PoolPortal {
   *
   * @param _relay       address of bancor relay
   */
-  function getBancorConnectorsByRelay(address relay)
+  function getBancorConnectorsByRelay(address _relay)
   public
   view
   returns(
@@ -281,7 +282,7 @@ contract PoolPortal {
     ERC20 ERCConnector
   )
   {
-    address converterAddress = getBacorConverterAddressByRelay(relay);
+    address converterAddress = getBacorConverterAddressByRelay(_relay);
     BancorConverterInterface converter = BancorConverterInterface(converterAddress);
     BNTConnector = converter.connectorTokens(0);
     ERCConnector = converter.connectorTokens(1);
@@ -322,9 +323,32 @@ contract PoolPortal {
     return sum;
   }
 
+  /**
+  * @dev helper for get amounts for both Uniswap connectors for input amount of pool
+  *
+  * @param _amount         relay amount
+  * @param _exchange       address of uniswap exchane
+  */
+  function getUniswapConnectorsAmountByPoolAmount(
+    uint256 _amount,
+    address _exchange
+  )
+  public
+  view
+  returns(uint256 ethAmount, uint256 ercAmount)
+  {
+    ERC20 token = ERC20(uniswapFactory.getToken(_exchange));
+    // total_liquidity exchange.totalSupply
+    uint256 totalLiquidity = UniswapExchangeInterface(_exchange).totalSupply();
+    // ethAmount = amount * exchane.eth.balance / total_liquidity
+    ethAmount = _amount.mul(_exchange.balance).div(totalLiquidity);
+    // ercAmount = amount * token.balanceOf(exchane) / total_liquidity
+    ercAmount = _amount.mul(token.balanceOf(_exchange)).div(totalLiquidity);
+  }
+
 
   /**
-  * @dev helper for get amount for both Bancor connectors which need for by input amount of relay
+  * @dev helper for get amount for both Bancor connectors for input amount of pool
   *
   * @param _amount      relay amount
   * @param _relay       address of bancor relay
