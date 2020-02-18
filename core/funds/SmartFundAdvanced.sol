@@ -1,9 +1,8 @@
-// TODO Desribe methods
 pragma solidity ^0.4.24;
 
 /*
 * This contract inherits logic of SmartFundCore and implements logic of Compound.
-* Perhaps in the future we will need funds that do not inherit the logic of Lend,
+* Perhaps in the future we will need select for inherit the logic of Lend or not,
 * therefore, this logic must be separate
 */
 
@@ -61,7 +60,12 @@ contract SmartFundAdvanced is SmartFundCore {
   }
 
 
-  // _cToken - cToken address
+  /**
+  * @dev buy Compound cTokens
+  *
+  * @param _amount       amount of ERC20 or ETH
+  * @param _cToken       cToken address
+  */
   function compoundMint(uint256 _amount, address _cToken) external onlyOwner{
     if(_cToken == address(cEther)){
       // mint cETH
@@ -87,7 +91,12 @@ contract SmartFundAdvanced is SmartFundCore {
     }
   }
 
-  // _amount The number of cTokens to be redeemed
+  /**
+  * @dev sell Compound cToken by cToken amount
+  *
+  * @param _amount       amount of ERC20 or ETH
+  * @param _cToken       cToken address
+  */
   function compoundRedeem(uint256 _amount, address _cToken) external onlyOwner {
     if(_cToken == address(cEther)){
       cEther.redeem(_amount);
@@ -97,7 +106,12 @@ contract SmartFundAdvanced is SmartFundCore {
     }
   }
 
-  // _amount The number of underlying asset to be redeemed
+  /**
+  * @dev sell Compound cToken by underlying (ERC20 or ETH) amount
+  *
+  * @param _amount       amount of ERC20 or ETH
+  * @param _cToken       cToken address
+  */
   function compoundRedeemUnderlying(uint256 _amount, address _cToken) external onlyOwner {
     if(_cToken == address(cEther)){
       cEther.redeemUnderlying(_amount);
@@ -107,7 +121,11 @@ contract SmartFundAdvanced is SmartFundCore {
     }
   }
 
-  // convert cToken fund balance in ETH ratio
+  /**
+  * @dev get value for cToken in base asset (ERC20 or ETH) ratio for this smart fund address
+  *
+  * @param _cToken       cToken address
+  */
   function compoundGetCTokenValue(
     address _cToken
   )
@@ -118,7 +136,10 @@ contract SmartFundAdvanced is SmartFundCore {
     result = CToken(_cToken).balanceOfUnderlying(address(this));
   }
 
-  // return value for all smart fund cTokens in ETH ratio
+  /**
+  * @dev get value for all cTokens for this smart fund address in ETH ratio
+  *
+  */
   function compoundGetAllFundCtokensinETH()
     public
     view
