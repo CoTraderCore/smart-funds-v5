@@ -1,17 +1,16 @@
-// TODO write docs for methods
 pragma solidity ^0.4.24;
 
-import "../zeppelin-solidity/contracts/token/ERC20/ERC20.sol";
-import "../zeppelin-solidity/contracts/math/SafeMath.sol";
+import "../../zeppelin-solidity/contracts/token/ERC20/ERC20.sol";
+import "../../zeppelin-solidity/contracts/math/SafeMath.sol";
 
-import "../bancor/interfaces/BancorConverterInterface.sol";
-import "../bancor/interfaces/IGetRatioForBancorAssets.sol";
-import "../bancor/interfaces/SmartTokenInterface.sol";
-import "../bancor/interfaces/IGetBancorAddressFromRegistry.sol";
-import "../bancor/interfaces/IBancorFormula.sol";
+import "../../bancor/interfaces/BancorConverterInterface.sol";
+import "../../bancor/interfaces/IGetRatioForBancorAssets.sol";
+import "../../bancor/interfaces/SmartTokenInterface.sol";
+import "../../bancor/interfaces/IGetBancorAddressFromRegistry.sol";
+import "../../bancor/interfaces/IBancorFormula.sol";
 
-import "../uniswap/interfaces/UniswapExchangeInterface.sol";
-import "../uniswap/interfaces/UniswapFactoryInterface.sol";
+import "../../uniswap/interfaces/UniswapExchangeInterface.sol";
+import "../../uniswap/interfaces/UniswapFactoryInterface.sol";
 
 
 contract PoolPortal {
@@ -20,9 +19,10 @@ contract PoolPortal {
   IGetRatioForBancorAssets public bancorRatio;
   IGetBancorAddressFromRegistry public bancorRegistry;
   UniswapFactoryInterface public uniswapFactory;
+
   address public BancorEtherToken;
 
-  // Paraswap and Kyber recognizes ETH by this address
+  // CoTrader platform recognize ETH by this address
   ERC20 constant private ETH_TOKEN_ADDRESS = ERC20(0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE);
 
   enum PortalType { Bancor, Uniswap }
@@ -41,7 +41,9 @@ contract PoolPortal {
     address _bancorEtherToken,
     address _uniswapFactory
 
-  ) public {
+  )
+  public
+  {
     bancorRegistry = IGetBancorAddressFromRegistry(_bancorRegistryWrapper);
     bancorRatio = IGetRatioForBancorAssets(_bancorRatio);
     BancorEtherToken = _bancorEtherToken;
@@ -71,9 +73,7 @@ contract PoolPortal {
       buyBancorPool(_poolToken, _amount);
     }
     else if (_type == uint(PortalType.Uniswap)){
-      uint256 ethAmount = uint256(_additionalArgs[0]);
-      require(msg.value >= ethAmount, "Throw if not enought eth");
-      buyUniswapPool(_poolToken, ethAmount, _additionalArgs);
+      buyUniswapPool(_poolToken, msg.value, _additionalArgs);
     }
     else{
       // unknown portal type
@@ -82,35 +82,32 @@ contract PoolPortal {
   }
 
 
-  // helper for buy pool via bancor
+  /**
+  * @dev helper for buy pool in Bancor network
+  *
+  * @param _poolToken        address of bancor converter
+  * @param _amount           amount of bancor relay
+  */
   function buyBancorPool(ERC20 _poolToken, uint256 _amount) private {
     // get Bancor converter
     address converterAddress = getBacorConverterAddressByRelay(address(_poolToken));
-
     // calculate connectors amount for buy certain pool amount
     (uint256 bancorAmount,
      uint256 connectorAmount) = getBancorConnectorsAmountByRelayAmount(_amount, _poolToken);
-
     // get converter as contract
     BancorConverterInterface converter = BancorConverterInterface(converterAddress);
-
     // approve bancor and coonector amount to converter
-
     // get connectors
     (ERC20 bancorConnector,
     ERC20 ercConnector) = getBancorConnectorsByRelay(address(_poolToken));
-
     // reset approve (some ERC20 not allow do new approve if already approved)
     bancorConnector.approve(converterAddress, 0);
     ercConnector.approve(converterAddress, 0);
-
     // transfer from fund and approve to converter
     _transferFromSenderAndApproveTo(bancorConnector, bancorAmount, converterAddress);
     _transferFromSenderAndApproveTo(ercConnector, connectorAmount, converterAddress);
-
     // buy relay from converter
     converter.fund(_amount);
-
     // transfer relay back to smart fund
     _poolToken.transfer(msg.sender, _amount);
 
@@ -125,39 +122,58 @@ contract PoolPortal {
   }
 
 
-  // helper for buy pool via Uniswap
-  function buyUniswapPool(address _poolToken, uint256 ethAmount, bytes32[] _additionalArgs)
+  /**
+  * @dev helper for buy pool in Uniswap network
+  *
+  * @param _poolToken        address of Uniswap exchange
+  * @param _ethAmount        ETH amount (in wei)
+  * @param _additionalArgs   additional data array where 0 = deadline, 1 = min_liquidity
+  */
+  function buyUniswapPool(address _poolToken, uint256 _ethAmount, bytes32[] _additionalArgs)
   private
   returns(uint256 poolAmount)
   {
     // get token address
     address tokenAddress = uniswapFactory.getToken(_poolToken);
-
     // check if such a pool exist
     if(tokenAddress != address(0x0000000000000000000000000000000000000000)){
-      // approve tokens to exchane
-      uint256 erc20Amount = _additionalArgs[0];
+      // get tokens amd approve to exchane
+      uint256 erc20Amount = getUniswapTokenAmountByETH(tokenAddress, _ethAmount);
       _transferFromSenderAndApproveTo(ERC20(tokenAddress), erc20Amount, _poolToken);
-
       // get exchange contract
       UniswapExchangeInterface exchange = UniswapExchangeInterface(_poolToken);
-
       // get additional params
-      uint256 deadline = uint256(_additionalArgs[1]);
-      uint256 min_liquidity = uint256(_additionalArgs[2]);
-
+      uint256 deadline = uint256(_additionalArgs[0]);
+      uint256 min_liquidity = uint256(_additionalArgs[1]);
       // buy pool
-      poolAmount = addLiquidity(
+      poolAmount = exchange.addLiquidity.value(_ethAmount)(
         min_liquidity,
         erc20Amount,
-        deadline).value(ethAmount);
-
+        deadline);
       // transfer pool token back to smart fund
       ERC20(_poolToken).transfer(msg.sender, poolAmount);
+      // transfer ERC20 remains
+      if(ERC20(tokenAddress).balanceOf(address(this) > 0))
+          ERC20(tokenAddress).transfer(msg.sender, balanceOf(address(this));
     }else{
       // throw if such pool not Exist in Uniswap network
       revert();
     }
+  }
+
+  /**
+  * @dev return token (in Uniswap net) amount by ETH input ratio
+  *
+  * @param _token     address of ERC20 token
+  * @param _amount    ETH amount (in wei)
+  */
+  function getUniswapTokenAmountByETH(address _token, uint256 _amount)
+  public
+  view
+  returns(uint256)
+  {
+    UniswapExchangeInterface exchange = UniswapExchangeInterface(uniswapFactory.getExchange(_token));
+    return exchange.getEthToTokenOutputPrice(_amount);
   }
 
 
@@ -191,42 +207,46 @@ contract PoolPortal {
     }
   }
 
-  // helper for sell Bancor pool
+  /**
+  * @dev helper for sell pool in Bancor network
+  *
+  * @param _poolToken        address of bancor relay
+  * @param _amount           amount of bancor relay
+  */
   function sellPoolViaBancor(ERC20 _poolToken, uint256 _amount) private {
     // transfer pool from fund
     _poolToken.transferFrom(msg.sender, address(this), _amount);
-
     // get Bancor Converter address
     address converterAddress = getBacorConverterAddressByRelay(address(_poolToken));
-
     // liquidate relay
     BancorConverterInterface(converterAddress).liquidate(_amount);
-
     // get connectors
     (ERC20 bancorConnector,
     ERC20 ercConnector) = getBancorConnectorsByRelay(address(_poolToken));
-
     // transfer connectors back to fund
     bancorConnector.transfer(msg.sender, bancorConnector.balanceOf(this));
     ercConnector.transfer(msg.sender, ercConnector.balanceOf(this));
   }
 
 
-  // helper for sell pool via Uniswap
+  /**
+  * @dev helper for sell pool in Uniswap network
+  *
+  * @param _poolToken        address of uniswap exchane
+  * @param _amount           amount of uniswap pool
+  */
   function sellPoolViaUniswap(ERC20 _poolToken, uint256 _amount, bytes32[] _additionalArgs) private {
     address tokenAddress = uniswapFactory.getToken(_poolToken);
     // check if such a pool exist
     if(tokenAddress != address(0x0000000000000000000000000000000000000000)){
       UniswapExchangeInterface exchange = UniswapExchangeInterface(_poolToken);
-
+      // get additional data
       uint256 min_eth = uint256(_additionalArgs[0]);
       uint256 min_tokens = uint256(_additionalArgs[1]);
       uint256 deadline = uint256(_additionalArgs[2]);
-
       // liquidate
       (uint256 eth_amount,
        uint256 token_amount) = exchange.removeLiquidity(_amount, min_eth, min_tokens, deadline);
-
       // transfer assets back to smart fund
       msg.sender.transfer(eth_amount);
       ERC20(tokenAddress).transfer(msg.sender, token_amount);
@@ -235,12 +255,24 @@ contract PoolPortal {
     }
   }
 
-
-  function getBacorConverterAddressByRelay(address relay) public view returns(address converter){
-    converter = SmartTokenInterface(relay).owner();
+  /**
+  * @dev helper for get bancor converter by bancor relay addrses
+  *
+  * @param _relay       address of bancor relay
+  */
+  function getBacorConverterAddressByRelay(address _relay)
+  public
+  view
+  returns(address converter)
+  {
+    converter = SmartTokenInterface(_relay).owner();
   }
 
-
+  /**
+  * @dev helper for get Bancor ERC20 connectors addresses
+  *
+  * @param _relay       address of bancor relay
+  */
   function getBancorConnectorsByRelay(address relay)
   public
   view
@@ -255,15 +287,30 @@ contract PoolPortal {
     ERCConnector = converter.connectorTokens(1);
   }
 
-
-  function getRatio(address _from, address _to, uint256 _amount) public view returns(uint256 result){
+  /**
+  * @dev get ratio from Bancor network!
+  * TODO should return ratio from Uniswap for Uniswap assets
+  */
+  function getRatio(address _from, address _to, uint256 _amount)
+  public
+  view
+  returns(uint256 result)
+  {
     result = bancorRatio.getRatio(_from, _to, _amount);
     return result;
   }
 
 
-  // Calculate value for assets array in ration of some one assets (like ETH or DAI)
-  function getTotalValue(address[] _fromAddresses, uint256[] _amounts, address _to) public view returns (uint256) {
+  /**
+  * @dev return total value for bancor assets
+  *
+  * TODO should return ratio from Uniswap for Uniswap assets
+  */
+  function getTotalValue(address[] _fromAddresses, uint256[] _amounts, address _to)
+  public
+  view
+  returns (uint256)
+  {
     // replace ETH with Bancor ETH wrapper
     address to = ERC20(_to) == ETH_TOKEN_ADDRESS ? BancorEtherToken : _to;
     uint256 sum = 0;
@@ -276,7 +323,12 @@ contract PoolPortal {
   }
 
 
-  // This function calculate amount of both reserve for buy and sell by pool amount
+  /**
+  * @dev helper for get amount for both Bancor connectors which need for by input amount of relay
+  *
+  * @param _amount      relay amount
+  * @param _relay       address of bancor relay
+  */
   function getBancorConnectorsAmountByRelayAmount
   (
     uint256 _amount,
@@ -285,20 +337,15 @@ contract PoolPortal {
   public view returns(uint256 bancorAmount, uint256 connectorAmount) {
     // get converter contract
     BancorConverterInterface converter = BancorConverterInterface(SmartTokenInterface(_relay).owner());
-
     // calculate BNT and second connector amount
-
     // get connectors
     ERC20 bancorConnector = converter.connectorTokens(0);
     ERC20 ercConnector = converter.connectorTokens(1);
-
     // get connectors balance
     uint256 bntBalance = converter.getConnectorBalance(bancorConnector);
     uint256 ercBalance = converter.getConnectorBalance(ercConnector);
-
     // get bancor formula contract
     IBancorFormula bancorFormula = IBancorFormula(bancorRegistry.getBancorContractAddresByName("BancorFormula"));
-
     // calculate input
     bancorAmount = bancorFormula.calculateFundCost(_relay.totalSupply(), bntBalance, 100, _amount);
     connectorAmount = bancorFormula.calculateFundCost(_relay.totalSupply(), ercBalance, 100, _amount);
