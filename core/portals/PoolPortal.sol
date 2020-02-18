@@ -1,5 +1,10 @@
 pragma solidity ^0.4.24;
 
+/*
+* This contract allow buy/sell pool for Bancor and Uniswap assets
+* and provide ratio and addition info for pool assets
+*/
+
 import "../../zeppelin-solidity/contracts/token/ERC20/ERC20.sol";
 import "../../zeppelin-solidity/contracts/math/SafeMath.sol";
 
@@ -289,41 +294,6 @@ contract PoolPortal {
   }
 
   /**
-  * @dev get ratio from Bancor network!
-  * TODO should return ratio from Uniswap for Uniswap assets
-  */
-  function getRatio(address _from, address _to, uint256 _amount)
-  public
-  view
-  returns(uint256 result)
-  {
-    result = bancorRatio.getRatio(_from, _to, _amount);
-    return result;
-  }
-
-
-  /**
-  * @dev return total value for bancor assets
-  *
-  * TODO should return ratio from Uniswap for Uniswap assets
-  */
-  function getTotalValue(address[] _fromAddresses, uint256[] _amounts, address _to)
-  public
-  view
-  returns (uint256)
-  {
-    // replace ETH with Bancor ETH wrapper
-    address to = ERC20(_to) == ETH_TOKEN_ADDRESS ? BancorEtherToken : _to;
-    uint256 sum = 0;
-
-    for (uint256 i = 0; i < _fromAddresses.length; i++) {
-      sum = sum.add(getRatio(_fromAddresses[i], to, _amounts[i]));
-    }
-
-    return sum;
-  }
-
-  /**
   * @dev helper for get amounts for both Uniswap connectors for input amount of pool
   *
   * @param _amount         relay amount
@@ -373,6 +343,25 @@ contract PoolPortal {
     // calculate input
     bancorAmount = bancorFormula.calculateFundCost(_relay.totalSupply(), bntBalance, 100, _amount);
     connectorAmount = bancorFormula.calculateFundCost(_relay.totalSupply(), ercBalance, 100, _amount);
+  }
+
+  /**
+  * @dev helper for get ratio between assets in bancor newtork
+  *
+  * @param _from      token or relay address
+  * @param _to        token or relay address
+  * @param _amount    amount from
+  */
+  function getBancorRatio(address _from, address _to, uint256 _amount)
+  public
+  view
+  returns(uint256)
+  {
+    // Change ETH to Bancor ETH wrapper
+    address fromAddress = ERC20(_from) == ETH_TOKEN_ADDRESS ? BancorEtherToken : _from;
+    address toAddress = ERC20(_to) == ETH_TOKEN_ADDRESS ? BancorEtherToken : _to;
+    // return Bancor ratio
+    return bancorRatio.getRatio(fromAddress, toAddress, _amount);
   }
 
 

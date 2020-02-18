@@ -4,6 +4,9 @@ pragma solidity ^0.4.24;
 * This contract inherits logic of SmartFundCore and implements logic of Compound.
 * Perhaps in the future we will need select for inherit the logic of Lend or not,
 * therefore, this logic must be separate
+*
+* NOTE: maybe in future, if we don't need implement borrow logic, and no need bind
+* debt with msg.sender, we can do Compound logic as addition portal  
 */
 
 import "../../compound/CEther.sol";

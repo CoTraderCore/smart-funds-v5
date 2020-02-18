@@ -21,7 +21,10 @@ contract PoolPortalInterface {
   external
   payable;
 
-  function getBacorConverterAddressByRelay(address relay) public view returns(address converter);
+  function getBacorConverterAddressByRelay(address relay)
+  public
+  view
+  returns(address converter);
 
   function getBancorConnectorsAmountByRelayAmount
   (
@@ -38,6 +41,21 @@ contract PoolPortalInterface {
     ERC20 ERCConnector
   );
 
-  function getRatio(address _from, address _to, uint256 _amount) public view returns(uint256);
-  function getTotalValue(address[] _fromAddresses, uint256[] _amounts, address _to) public view returns (uint256);
+  function getBancorRatio(address _from, address _to, uint256 _amount)
+  public
+  view
+  returns(uint256);
+
+  function getUniswapConnectorsAmountByPoolAmount(
+    uint256 _amount,
+    address _exchange
+  )
+  public
+  view
+  returns(uint256 ethAmount, uint256 ercAmount);
+
+  function getUniswapTokenAmountByETH(address _token, uint256 _amount)
+  public
+  view
+  returns(uint256);
 }

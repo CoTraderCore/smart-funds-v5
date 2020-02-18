@@ -1,5 +1,9 @@
 pragma solidity ^0.4.24;
 
+/*
+* This contract do trade via Paraswap, Bancor and Uniswap, and then return assets to smart funds
+* and also allow get ratio between smart fund assets
+*/
 
 import "../../zeppelin-solidity/contracts/ownership/Ownable.sol";
 import "../../zeppelin-solidity/contracts/math/SafeMath.sol";
@@ -12,15 +16,11 @@ import "../../paraswap/interfaces/IParaswapParams.sol";
 import "../../bancor/interfaces/IGetBancorAddressFromRegistry.sol";
 import "../../bancor/interfaces/BancorNetworkInterface.sol";
 import "../../bancor/interfaces/PathFinderInterface.sol";
-import "../../bancor/interfaces/IGetRatioForBancorAssets.sol";
-
 
 import "../interfaces/ExchangePortalInterface.sol";
+import "../interfaces/PermittedStabelsInterface.sol";
+import "../interfaces/PoolPortalInterface.sol";
 
-/*
-* The ExchangePortal contract is an implementation of ExchangePortalInterface that allows
-* SmartFunds to exchange and calculate their value via Paraswap
-*/
 contract ExchangePortal is ExchangePortalInterface, Ownable {
   using SafeMath for uint256;
 
@@ -30,9 +30,11 @@ contract ExchangePortal is ExchangePortalInterface, Ownable {
   IParaswapParams public paraswapParams;
   address public paraswapSpender;
 
-  IGetRatioForBancorAssets public getBancorRatio;
   address public BancorEtherToken;
   IGetBancorAddressFromRegistry public bancorRegistry;
+
+  PermittedStabelsInterface permitedStable;
+  PoolPortalInterface poolPortal;
 
   enum ExchangeType { Paraswap, Bancor }
 
@@ -52,12 +54,13 @@ contract ExchangePortal is ExchangePortalInterface, Ownable {
   /**
   * @dev contructor
   *
-  * @param _paraswap        paraswap main address
-  * @param _paraswapPrice   paraswap price feed address
-  * @param _paraswapParams  helper contract for convert params from bytes32
+  * @param _paraswap               paraswap main address
+  * @param _paraswapPrice          paraswap price feed address
+  * @param _paraswapParams         helper contract for convert params from bytes32
   * @param _bancorRegistryWrapper  address of Bancor Registry Wrapper
-  * @param _BancorEtherToken address of Bancor ETH wrapper
-  * @param _getBancorRatio address of GetRatioForBancorAssets
+  * @param _BancorEtherToken       address of Bancor ETH wrapper
+  * @param _permitedStable         address of permitedStable contract
+  * @param _poolPortal             address of pool portal
   */
   constructor(
     address _paraswap,
@@ -65,7 +68,8 @@ contract ExchangePortal is ExchangePortalInterface, Ownable {
     address _paraswapParams,
     address _bancorRegistryWrapper,
     address _BancorEtherToken,
-    address _getBancorRatio
+    address _permitedStable,
+    address _poolPortal
     )
     public
     {
@@ -76,7 +80,8 @@ contract ExchangePortal is ExchangePortalInterface, Ownable {
     paraswapSpender = paraswapInterface.getTokenTransferProxy();
     bancorRegistry = IGetBancorAddressFromRegistry(_bancorRegistryWrapper);
     BancorEtherToken = _BancorEtherToken;
-    getBancorRatio = IGetRatioForBancorAssets(_getBancorRatio);
+    permitedStable = PermittedStabelsInterface(_permitedStable);
+    poolPortal = PoolPortalInterface(_poolPortal);
   }
 
 
@@ -288,31 +293,32 @@ contract ExchangePortal is ExchangePortalInterface, Ownable {
   *
   * @return best price from Paraswap (or Bancor)
   */
-  function getValue(address _from, address _to, uint256 _amount) public view returns (uint256 value) {
+  function getValue(address _from, address _to, uint256 _amount) public view returns (uint256) {
      if(_amount > 0){
-       uint256 result = getValueViaParaswap(_from, _to, _amount);
+       uint256 paraswapResult = getValueViaParaswap(_from, _to, _amount);
        // If Paraswap return 0, check from Bancor network for ensure
-       if(result > 0){
-         value = result;
-       }else{
-         value = getValueViaBancor(_from, _to, _amount);
-       }
+       if(paraswapResult > 0)
+         return paraswapResult;
+       // If Bancor return 0, check from Uniswap network for ensure
+       uint256 bancorResult = getValueViaBancor(_from, _to, _amount);
+       if(bancorResult > 0)
+          return bancorResult;
+
+       return getValueForUniswapPools(_from, _to, _amount);
      }else{
-       value = 0;
+       return 0;
      }
-     return value;
   }
 
-
+  // helper for get ratio between assets in Paraswap platform
   function getValueViaParaswap(
     address _from,
     address _to,
     uint256 _amount
   ) public view returns (uint256 value) {
-    // Check call Paraswap (Because Paraswap can return error for some assets)
+    // Check call Paraswap (Because Paraswap can return error for some not supported  assets)
     (bool success) = address(priceFeedInterface).call(
     abi.encodeWithSelector(priceFeedInterface.getBestPriceSimple.selector, _from, _to, _amount));
-
     // if Paraswap can get rate for this assets, use Paraswap
     if(success){
       value = priceFeedInterface.getBestPriceSimple(_from, _to, _amount);
@@ -321,16 +327,39 @@ contract ExchangePortal is ExchangePortalInterface, Ownable {
     }
   }
 
+  // helper for get ratio between assets in Bancor network
   function getValueViaBancor(
     address _from,
     address _to,
     uint256 _amount
+  )
+  public
+  view
+  returns (uint256 value)
+  {
+    // Check call Bancor (Because Bancor can return error for some not supported assets)
+    (bool success) = address(poolPortal).call(
+    abi.encodeWithSelector(poolPortal.getBancorRatio.selector, _from, _to, _amount));
+    // if Bancor can get rate for this assets use Bancor
+    if(success){
+      value = poolPortal.getBancorRatio(_from, _to, _amount);
+    }else{
+      value = 0;
+    }
+  }
+
+  // helper for get ratio between pools in Uniswap network
+  // _from - uniswap pool address
+  function getValueForUniswapPools(
+    address _from,
+    address _to,
+    uint256 _amount
   ) public view returns (uint256 value){
-    // Change ETH to Bancor ETH wrapper
-    address fromAddress = ERC20(_from) == ETH_TOKEN_ADDRESS ? BancorEtherToken : _from;
-    address toAddress = ERC20(_to) == ETH_TOKEN_ADDRESS ? BancorEtherToken : _to;
-    // get Bancor rate
-    value = getBancorRatio.getRatio(fromAddress, toAddress, _amount);
+    if(permitedStable.permittedAddresses(_to)){
+      // return value for assets in USD
+    }else{
+      // return value for assets in ETH
+    }
   }
 
   /**
@@ -344,11 +373,9 @@ contract ExchangePortal is ExchangePortalInterface, Ownable {
   */
   function getTotalValue(address[] _fromAddresses, uint256[] _amounts, address _to) public view returns (uint256) {
     uint256 sum = 0;
-
     for (uint256 i = 0; i < _fromAddresses.length; i++) {
       sum = sum.add(getValue(_fromAddresses[i], _to, _amounts[i]));
     }
-
     return sum;
   }
 
