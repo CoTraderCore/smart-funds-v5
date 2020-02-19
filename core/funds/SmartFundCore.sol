@@ -595,6 +595,19 @@ contract SmartFundCore is SmartFundOverrideInterface, Ownable, ERC20 {
     }
   }
 
+  /**
+  * @dev Approve 0 for a certain address
+  *
+  * NOTE: Some ERC20 has no standard approve logic, and not allow do new approve
+  * if alredy approved.
+  *
+  * @param _token                   address of ERC20
+  * @param _spender                 address of spender
+  */
+  function resetApprove(address _token, address _spender) external onlyOwner {
+    ERC20(_token).approve(_spender, 0);
+  }
+
   // Fallback payable function in order to be able to receive ether from other contracts
   function() public payable {}
 
