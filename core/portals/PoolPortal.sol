@@ -177,7 +177,7 @@ contract PoolPortal {
   {
     UniswapExchangeInterface exchange = UniswapExchangeInterface(
       uniswapFactory.getExchange(_token));
-    return exchange.getTokenToEthInputPrice(_amount);
+    return exchange.getEthToTokenInputPrice(_amount);
   }
 
 
