@@ -246,14 +246,11 @@ contract PoolPortal {
       UniswapExchangeInterface exchange = UniswapExchangeInterface(_poolToken);
       // approve pool token
       _transferFromSenderAndApproveTo(ERC20(_poolToken), _amount, _poolToken);
-      // get additional data
+      // get min returns
       (uint256 minEthAmount,
         uint256 minErcAmount) = getUniswapConnectorsAmountByPoolAmount(
           _amount,
           address(_poolToken));
-      // sub slippage 5% for min return
-      minEthAmount = minEthAmount.div(100).mul(95);
-      minErcAmount = minErcAmount.div(100).mul(95);
       // set deadline
       uint256 deadline = now + 15 minutes;
       // liquidate
