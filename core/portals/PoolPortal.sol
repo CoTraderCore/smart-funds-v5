@@ -152,6 +152,8 @@ contract PoolPortal {
         _minLiquidity,
         erc20Amount,
         deadline);
+      // reset approve (some ERC20 not allow do new approve if already approved)
+      ERC20(tokenAddress).approve(_poolToken, 0);
       // transfer pool token back to smart fund
       ERC20(_poolToken).transfer(msg.sender, poolAmount);
       // transfer ERC20 remains
