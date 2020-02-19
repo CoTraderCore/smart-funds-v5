@@ -244,6 +244,8 @@ contract PoolPortal {
     // check if such a pool exist
     if(tokenAddress != address(0x0000000000000000000000000000000000000000)){
       UniswapExchangeInterface exchange = UniswapExchangeInterface(_poolToken);
+      // approve pool token
+      _transferFromSenderAndApproveTo(ERC20(_poolToken), erc20Amount, _poolToken);
       // get additional data
       (uint256 minEthAmount,
         uint256 minErcAmount) = getUniswapConnectorsAmountByPoolAmount(
