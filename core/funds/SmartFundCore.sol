@@ -282,18 +282,21 @@ contract SmartFundCore is SmartFundOverrideInterface, Ownable, ERC20 {
    ERC20 _poolToken
   )
   external onlyOwner {
-
-   if(_type == uint(PortalType.Bancor)){
+   if(_type == uint(PortalType.Bancor))
     _buyBancorPool(_amount, _type, _poolToken);
-   }
-   else if(_type == uint(PortalType.Uniswap)){
-    _buyUniswapPool(_amount, _type, _poolToken);
-   }
-   else{
-     // unknown portal type
-     revert();
-   }
 
+   if(_type == uint(PortalType.Uniswap))
+    _buyUniswapPool(_amount, _type, _poolToken);
+
+   // add new pool in fund
+   uint256 poolBalance = _poolToken.balanceOf(address(this));
+   if(poolBalance > 0){
+     // Add relay as ERC20 for withdraw assets
+     _addToken(address(_poolToken));
+     // Mark this token as relay
+     _markAsRelay(address(_poolToken));
+   }
+   // emit event
    emit BuyPool(_poolToken, _amount);
   }
 
@@ -307,7 +310,7 @@ contract SmartFundCore is SmartFundOverrideInterface, Ownable, ERC20 {
   {
     ERC20 token = ERC20(poolPortal.getTokenByUniswapExchange(_poolToken));
     token.approve(address(poolPortal), token.balanceOf(address(this)));
-    // buy pool(relay)
+    // buy pool payable
     poolPortal.buyPool.value(_amount)(
      _amount,
      _type,
@@ -315,18 +318,7 @@ contract SmartFundCore is SmartFundOverrideInterface, Ownable, ERC20 {
     );
     //reset approve
     token.approve(address(poolPortal), 0);
-    // add new pool in fund
-    uint256 poolBalance = _poolToken.balanceOf(address(this));
-    if(poolBalance > 0){
-      // Add relay as ERC20 for withdraw assets
-      _addToken(address(_poolToken));
-      // Mark this token as relay
-      _markAsRelay(address(_poolToken));
-    }
-
-    emit BuyPool(_poolToken, poolBalance);
   }
-
 
   // Helper for buy Bancor pool
   function _buyBancorPool(
@@ -336,29 +328,20 @@ contract SmartFundCore is SmartFundOverrideInterface, Ownable, ERC20 {
   ) private
   {
     // get connectors
-    (ERC20 bancorConnector, ERC20 ercConnector) = poolPortal.getBancorConnectorsByRelay(address(_poolToken));
+    (ERC20 bancorConnector,
+       ERC20 ercConnector) = poolPortal.getBancorConnectorsByRelay(address(_poolToken));
     // Approve all connectors to pool portal (pool calculates the required amount dynamicly)
     bancorConnector.approve(address(poolPortal), bancorConnector.balanceOf(address(this)));
     ercConnector.approve(address(poolPortal), ercConnector.balanceOf(address(this)));
-    // buy pool(relay)
+    // buy pool(relay) not payable
     poolPortal.buyPool(
      _amount,
      _type,
     _poolToken
     );
-    // add new pool(relay) in fund
-    uint256 poolBalance = _poolToken.balanceOf(address(this));
-    if(poolBalance > 0){
-      // Add relay as ERC20 for withdraw assets
-      _addToken(address(_poolToken));
-      // Mark this token as relay
-      _markAsRelay(address(_poolToken));
-    }
     // reset approve
     bancorConnector.approve(address(poolPortal), 0);
     ercConnector.approve(address(poolPortal), 0);
-    
-    emit BuyPool(_poolToken, poolBalance);
   }
 
 
@@ -375,57 +358,44 @@ contract SmartFundCore is SmartFundOverrideInterface, Ownable, ERC20 {
     ERC20 _poolToken
   )
   external onlyOwner {
-    if(_type == uint(PortalType.Bancor)){
-     _sellBancorPool(_amount, _type, _poolToken);
-    }
-    else if(_type == uint(PortalType.Uniswap)){
-     _buyUniswapPool(_amount, _type, _poolToken);
-    }
-    else{
-      // unknown portal type
-      revert();
-    }
-  }
-
-  // Helper for sell Bancor pool
-  function _sellBancorPool(
-    uint256 _amount,
-    uint _type,
-    ERC20 _poolToken
-  )
-  private
-  {
     _poolToken.approve(address(poolPortal), _amount);
     poolPortal.sellPool(
       _amount,
       _type,
      _poolToken
     );
-    // add returned assets in fund as tokens (for case if manager removed this assets)
-    (ERC20 bancorConnector, ERC20 ercConnector) = poolPortal.getBancorConnectorsByRelay(address(_poolToken));
-    _addToken(address(bancorConnector));
-    _addToken(address(ercConnector));
+
+    // add to fund pool connectors
+    if(_type == uint(PortalType.Bancor))
+     _addBancorResereve(_poolToken);
+
+    if(_type == uint(PortalType.Uniswap))
+     _addUniswapReserve(_poolToken);
+
     emit SellPool(_poolToken, _amount);
   }
 
-  // Helper for sell Uniswap pool
-  function _sellUniswapPool(
-    uint256 _amount,
-    uint _type,
-    ERC20 _poolToken
-  )
+  // Helper for exctract Bancor pool connectos and add to fund
+  function _addBancorResereve(address _poolToken)
   private
   {
-    _poolToken.approve(address(poolPortal), _amount);
-    poolPortal.sellPool(
-      _amount,
-      _type,
-     _poolToken
-    );
+    // get bancor connectors addresses
+    (ERC20 bancorConnector,
+      ERC20 ercConnector) = poolPortal.getBancorConnectorsByRelay(
+        address(_poolToken));
+    // add returned assets in fund as tokens (for case if manager removed this assets)
+    _addToken(address(bancorConnector));
+    _addToken(address(ercConnector));
+  }
+
+  // Helper for exctract Uniswap pool connector and add to fund
+  function _addUniswapReserve(address _poolToken)
+  private
+  {
+    // extract Uniswap connector
     address tokenAddress = poolPortal.getTokenByUniswapExchange(_poolToken);
     // add returned asset to fund(for case if manager removed this asset)
     _addToken(tokenAddress);
-    emit SellPool(_poolToken, _amount);
   }
 
   function getAllTokenAddresses() public view returns (address[]) {
