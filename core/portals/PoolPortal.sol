@@ -76,7 +76,8 @@ contract PoolPortal {
       buyBancorPool(_poolToken, _amount);
     }
     else if (_type == uint(PortalType.Uniswap)){
-      buyUniswapPool(_amount, _poolToken, msg.value);
+      require(_amount == msg.value, "Not enough ETH");
+      buyUniswapPool(_poolToken, _amount);
     }
     else{
       // unknown portal type
@@ -128,11 +129,10 @@ contract PoolPortal {
   /**
   * @dev helper for buy pool in Uniswap network
   *
-  * @param _minLiquidity     min liquidity
   * @param _poolToken        address of Uniswap exchange
   * @param _ethAmount        ETH amount (in wei)
   */
-  function buyUniswapPool(uint256 _minLiquidity, address _poolToken, uint256 _ethAmount)
+  function buyUniswapPool(address _poolToken, uint256 _ethAmount)
   private
   returns(uint256 poolAmount)
   {
@@ -149,7 +149,7 @@ contract PoolPortal {
       uint256 deadline = now + 15 minutes;
       // buy pool
       poolAmount = exchange.addLiquidity.value(_ethAmount)(
-        _minLiquidity,
+        1,
         erc20Amount,
         deadline);
       // reset approve (some ERC20 not allow do new approve if already approved)

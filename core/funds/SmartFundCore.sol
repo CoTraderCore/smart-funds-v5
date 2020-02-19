@@ -135,16 +135,20 @@ contract SmartFundCore is SmartFundOverrideInterface, Ownable, ERC20 {
     successFee = _successFee;
     platformFee = _platformFee;
 
-    if (_owner == address(0))
+    if(_owner == address(0)){
       owner = msg.sender;
-    else
+    }
+    else{
       owner = _owner;
+    }
 
-    if (_platformAddress == address(0))
+    if(_platformAddress == address(0)){
       platformAddress = msg.sender;
-    else
+    }
+    else{
       platformAddress = _platformAddress;
-
+    }
+    
     // Initial Token is Ether
     tokenAddresses.push(address(ETH_TOKEN_ADDRESS));
 
@@ -271,9 +275,9 @@ contract SmartFundCore is SmartFundOverrideInterface, Ownable, ERC20 {
   /**
   * @dev buy pool via pool portal
   *
-  * @param _amount    amount of pool to buy (For Uniswap amount it's ETH)
-  * @param _type    type of pool (0 - Bancor)
-  * @param _poolToken    address of relay
+  * @param _amount        For Bancor amount it's relay, for Uniswap amount it's ETH
+  * @param _type          type of pool (0 - Bancor, 1 - Uniswap)
+  * @param _poolToken     address of relay for Bancor and exchange for Uniswap
   */
   function buyPool(
    uint256 _amount,
@@ -354,9 +358,9 @@ contract SmartFundCore is SmartFundOverrideInterface, Ownable, ERC20 {
   /**
   * @dev sell pool via pool portal
   *
-  * @param _amount    amount of pool to buy
-  * @param _type    type of pool (0 - Bancor)
-  * @param _poolToken    address of relay
+  * @param _amount        amount of Bancor relay or Uniswap exchange to sell
+  * @param _type          type of pool (0 - Bancor, 1 - Uniswap)
+  * @param _poolToken     address of Bancor relay or Uniswap exchange
   */
   function sellPool(
     uint256 _amount,
