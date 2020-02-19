@@ -62,14 +62,12 @@ contract PoolPortal {
   * @param _amount     amount of pool token
   * @param _type       pool type
   * @param _poolToken  pool token address
-  * @param _additionalArgs  addition data for another pools like Uniswap
   */
   function buyPool
   (
     uint256 _amount,
     uint _type,
-    ERC20 _poolToken,
-    bytes32[] _additionalArgs
+    ERC20 _poolToken
   )
   external
   payable
@@ -78,7 +76,7 @@ contract PoolPortal {
       buyBancorPool(_poolToken, _amount);
     }
     else if (_type == uint(PortalType.Uniswap)){
-      buyUniswapPool(_poolToken, msg.value, _additionalArgs);
+      buyUniswapPool(_amount, _poolToken, msg.value);
     }
     else{
       // unknown portal type
@@ -130,11 +128,11 @@ contract PoolPortal {
   /**
   * @dev helper for buy pool in Uniswap network
   *
+  * @param _minLiquidity     min liquidity
   * @param _poolToken        address of Uniswap exchange
   * @param _ethAmount        ETH amount (in wei)
-  * @param _additionalArgs   additional data array where 0 = deadline, 1 = min_liquidity
   */
-  function buyUniswapPool(address _poolToken, uint256 _ethAmount, bytes32[] _additionalArgs)
+  function buyUniswapPool(uint256 _minLiquidity, address _poolToken, uint256 _ethAmount)
   private
   returns(uint256 poolAmount)
   {
@@ -142,17 +140,16 @@ contract PoolPortal {
     address tokenAddress = uniswapFactory.getToken(_poolToken);
     // check if such a pool exist
     if(tokenAddress != address(0x0000000000000000000000000000000000000000)){
-      // get tokens amd approve to exchane
+      // get tokens amd approve to exchange
       uint256 erc20Amount = getUniswapTokenAmountByETH(tokenAddress, _ethAmount);
       _transferFromSenderAndApproveTo(ERC20(tokenAddress), erc20Amount, _poolToken);
       // get exchange contract
       UniswapExchangeInterface exchange = UniswapExchangeInterface(_poolToken);
-      // get additional params
-      uint256 deadline = uint256(_additionalArgs[0]);
-      uint256 min_liquidity = uint256(_additionalArgs[1]);
+      // set deadline
+      uint256 deadline = now + 15 minutes;
       // buy pool
       poolAmount = exchange.addLiquidity.value(_ethAmount)(
-        min_liquidity,
+        _minLiquidity,
         erc20Amount,
         deadline);
       // transfer pool token back to smart fund
@@ -168,7 +165,7 @@ contract PoolPortal {
   }
 
   /**
-  * @dev return token (in Uniswap net) amount by ETH input ratio
+  * @dev return token amount by ETH input ratio
   *
   * @param _token     address of ERC20 token
   * @param _amount    ETH amount (in wei)
@@ -178,8 +175,9 @@ contract PoolPortal {
   view
   returns(uint256)
   {
-    UniswapExchangeInterface exchange = UniswapExchangeInterface(uniswapFactory.getExchange(_token));
-    return exchange.getEthToTokenOutputPrice(_amount);
+    UniswapExchangeInterface exchange = UniswapExchangeInterface(
+      uniswapFactory.getExchange(_token));
+    return exchange.getTokenToEthInputPrice(_amount);
   }
 
 
@@ -189,14 +187,12 @@ contract PoolPortal {
   * @param _amount     amount of pool token
   * @param _type       pool type
   * @param _poolToken  pool token address
-  * @param _additionalArgs  addition data for another pools like Uniswap
   */
   function sellPool
   (
     uint256 _amount,
     uint _type,
-    ERC20 _poolToken,
-    bytes32[] _additionalArgs
+    ERC20 _poolToken
   )
   external
   payable
@@ -205,7 +201,7 @@ contract PoolPortal {
       sellPoolViaBancor(_poolToken, _amount);
     }
     else if (_type == uint(PortalType.Uniswap)){
-      sellPoolViaUniswap(_poolToken, _amount, _additionalArgs);
+      sellPoolViaUniswap(_poolToken, _amount);
     }
     else{
       // unknown portal type
@@ -241,18 +237,28 @@ contract PoolPortal {
   * @param _poolToken        address of uniswap exchane
   * @param _amount           amount of uniswap pool
   */
-  function sellPoolViaUniswap(ERC20 _poolToken, uint256 _amount, bytes32[] _additionalArgs) private {
+  function sellPoolViaUniswap(ERC20 _poolToken, uint256 _amount) private {
     address tokenAddress = uniswapFactory.getToken(_poolToken);
     // check if such a pool exist
     if(tokenAddress != address(0x0000000000000000000000000000000000000000)){
       UniswapExchangeInterface exchange = UniswapExchangeInterface(_poolToken);
       // get additional data
-      uint256 min_eth = uint256(_additionalArgs[0]);
-      uint256 min_tokens = uint256(_additionalArgs[1]);
-      uint256 deadline = uint256(_additionalArgs[2]);
+      (uint256 minEthAmount,
+        uint256 minErcAmount) = getUniswapConnectorsAmountByPoolAmount(
+          _amount,
+          address(_poolToken));
+      // sub slippage 5% for min return
+      minEthAmount = minEthAmount.div(100).mul(95);
+      minErcAmount = minErcAmount.div(100).mul(95);
+      // set deadline
+      uint256 deadline = now + 15 minutes;
       // liquidate
       (uint256 eth_amount,
-       uint256 token_amount) = exchange.removeLiquidity(_amount, min_eth, min_tokens, deadline);
+       uint256 token_amount) = exchange.removeLiquidity(
+         _amount,
+         minEthAmount,
+         minErcAmount,
+         deadline);
       // transfer assets back to smart fund
       msg.sender.transfer(eth_amount);
       ERC20(tokenAddress).transfer(msg.sender, token_amount);
@@ -293,6 +299,21 @@ contract PoolPortal {
     ERCConnector = converter.connectorTokens(1);
   }
 
+
+  /**
+  * @dev return ERC20 address from Uniswap exchange address
+  *
+  * @param _exchange       address of uniswap exchane
+  */
+  function getTokenByUniswapExchange(address _exchange)
+  public
+  view
+  returns(address)
+  {
+    return uniswapFactory.getToken(_exchange);
+  }
+
+
   /**
   * @dev helper for get amounts for both Uniswap connectors for input amount of pool
   *
@@ -330,7 +351,8 @@ contract PoolPortal {
   )
   public view returns(uint256 bancorAmount, uint256 connectorAmount) {
     // get converter contract
-    BancorConverterInterface converter = BancorConverterInterface(SmartTokenInterface(_relay).owner());
+    BancorConverterInterface converter = BancorConverterInterface(
+      SmartTokenInterface(_relay).owner());
     // calculate BNT and second connector amount
     // get connectors
     ERC20 bancorConnector = converter.connectorTokens(0);
@@ -339,10 +361,19 @@ contract PoolPortal {
     uint256 bntBalance = converter.getConnectorBalance(bancorConnector);
     uint256 ercBalance = converter.getConnectorBalance(ercConnector);
     // get bancor formula contract
-    IBancorFormula bancorFormula = IBancorFormula(bancorRegistry.getBancorContractAddresByName("BancorFormula"));
+    IBancorFormula bancorFormula = IBancorFormula(
+      bancorRegistry.getBancorContractAddresByName("BancorFormula"));
     // calculate input
-    bancorAmount = bancorFormula.calculateFundCost(_relay.totalSupply(), bntBalance, 100, _amount);
-    connectorAmount = bancorFormula.calculateFundCost(_relay.totalSupply(), ercBalance, 100, _amount);
+    bancorAmount = bancorFormula.calculateFundCost(
+      _relay.totalSupply(),
+      bntBalance,
+      100,
+       _amount);
+    connectorAmount = bancorFormula.calculateFundCost(
+      _relay.totalSupply(),
+      ercBalance,
+      100,
+       _amount);
   }
 
   /**

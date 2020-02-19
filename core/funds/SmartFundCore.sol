@@ -275,18 +275,16 @@ contract SmartFundCore is SmartFundOverrideInterface, Ownable, ERC20 {
   * @param _amount    amount of pool to buy
   * @param _type    type of pool (0 - Bancor)
   * @param _poolToken    address of relay
-  * @param _additionalArgs  bytes32 additional args array
   */
   function buyPool(
    uint256 _amount,
    uint _type,
-   ERC20 _poolToken,
-   bytes32[] _additionalArgs // Some addition data for another pools like Uniswap
+   ERC20 _poolToken
   )
   external onlyOwner {
 
    if(_type == uint(PortalType.Bancor)){
-    _buyBancorPool(_amount, _type, _poolToken, _additionalArgs);
+    _buyBancorPool(_amount, _type, _poolToken);
    }else{
      // unknown portal type
      revert();
@@ -300,8 +298,7 @@ contract SmartFundCore is SmartFundOverrideInterface, Ownable, ERC20 {
   function _buyBancorPool(
     uint256 _amount,
     uint _type,
-    ERC20 _poolToken,
-    bytes32[] _additionalArgs
+    ERC20 _poolToken
   ) internal
   {
     // get connectors
@@ -315,8 +312,7 @@ contract SmartFundCore is SmartFundOverrideInterface, Ownable, ERC20 {
     poolPortal.buyPool(
      _amount,
      _type,
-    _poolToken,
-     _additionalArgs
+    _poolToken
     );
 
     // add new pool(relay) in fund
@@ -340,13 +336,11 @@ contract SmartFundCore is SmartFundOverrideInterface, Ownable, ERC20 {
   * @param _amount    amount of pool to buy
   * @param _type    type of pool (0 - Bancor)
   * @param _poolToken    address of relay
-  * @param _additionalArgs  bytes32 additional args array
   */
   function sellPool(
     uint256 _amount,
     uint _type,
-    ERC20 _poolToken,
-    bytes32[] _additionalArgs
+    ERC20 _poolToken
   )
   external onlyOwner {
     _poolToken.approve(address(poolPortal), _amount);
@@ -354,8 +348,7 @@ contract SmartFundCore is SmartFundOverrideInterface, Ownable, ERC20 {
     poolPortal.sellPool(
       _amount,
       _type,
-     _poolToken,
-      _additionalArgs
+     _poolToken
     );
 
     // add returned assets in fund as tokens (for case if manager removed this assets)

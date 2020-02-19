@@ -354,12 +354,28 @@ contract ExchangePortal is ExchangePortalInterface, Ownable {
     address _from,
     address _to,
     uint256 _amount
-  ) public view returns (uint256 value){
-    if(permitedStable.permittedAddresses(_to)){
-      // return value for assets in USD
-    }else{
-      // return value for assets in ETH
-    }
+  )
+  public
+  view
+  returns (uint256)
+  {
+    // get connectors amount
+    (uint256 ethAmount,
+     uint256 ercAmount) = poolPortal.getUniswapConnectorsAmountByPoolAmount(
+      _amount,
+      _from
+    );
+    // get ERC amount in ETH
+    address token = poolPortal.getTokenByUniswapExchange(_from);
+    uint256 ercAmountInETH = getValueViaParaswap(token, ETH_TOKEN_ADDRESS, ercAmount);
+    // sum ETH with ERC amount in ETH
+    uint256 totalETH = ethAmount.add(ercAmountInETH);
+
+    // if no USD based fund return just ETH
+    if(!permitedStable.permittedAddresses(_to))
+       return totalETH;
+    // else convert ETH result to USD and return value in USD
+    return getValueViaParaswap(ETH_TOKEN_ADDRESS, _to, totalETH);
   }
 
   /**

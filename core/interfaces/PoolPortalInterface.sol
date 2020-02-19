@@ -5,8 +5,7 @@ contract PoolPortalInterface {
   (
     uint256 _amount,
     uint _type,
-    ERC20 _poolToken,
-    bytes32[] _additionalArgs
+    ERC20 _poolToken
   )
   external
   payable;
@@ -15,8 +14,7 @@ contract PoolPortalInterface {
   (
     uint256 _amount,
     uint _type,
-    ERC20 _poolToken,
-    bytes32[] _additionalArgs
+    ERC20 _poolToken
   )
   external
   payable;
@@ -58,4 +56,9 @@ contract PoolPortalInterface {
   public
   view
   returns(uint256);
+
+  function getTokenByUniswapExchange(address _exchange)
+  public
+  view
+  returns(address);
 }
