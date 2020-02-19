@@ -24,16 +24,14 @@ contract SmartFundInterface {
   function buyPool(
     uint256 _amount,
     uint _type,
-    ERC20 _poolToken,
-    bytes32[] _additionalArgs
+    ERC20 _poolToken
   )
     external;
 
   function sellPool(
     uint256 _amount,
     uint _type,
-    ERC20 _poolToken,
-    bytes32[] _additionalArgs
+    ERC20 _poolToken
   )
     external;
 
