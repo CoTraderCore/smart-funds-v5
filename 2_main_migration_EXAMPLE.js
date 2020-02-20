@@ -22,6 +22,8 @@ const BANCOR_ETH_WRAPPER = ""
 const PRICE_FEED_ADDRESS = ""
 const PLATFORM_FEE = 1000
 const STABLE_COIN_ADDRESS = ""
+const UNISWAP_FACTORY = ""
+const COMPOUND_CETHER = ""
 
 
 
@@ -36,10 +38,13 @@ module.exports = (deployer, network, accounts) => {
     .then(() => deployer.deploy(PoolPortal,
       GetBancorAddressFromRegistry.address,
       GetRatioForBancorAssets.address,
-      BANCOR_ETH_WRAPPER
+      BANCOR_ETH_WRAPPER,
+      UNISWAP_FACTORY
     ))
 
     .then(() => deployer.deploy(PermittedPools, PoolPortal.address))
+
+    .then(() => deployer.deploy(PermittedStabels, STABLE_COIN_ADDRESS))
 
     .then(() => deployer.deploy(ExchangePortal,
       PARASWAP_NETWORK_ADDRESS,
@@ -47,15 +52,14 @@ module.exports = (deployer, network, accounts) => {
       ParaswapParams.address,
       GetBancorAddressFromRegistry.address,
       BANCOR_ETH_WRAPPER,
-      GetRatioForBancorAssets.address
+      PermittedStabels.address,
+      PoolPortal.address
     ))
     .then(() => deployer.deploy(PermittedExchanges, ExchangePortal.address))
 
     .then(() => deployer.deploy(SmartFundETHFactory))
 
     .then(() => deployer.deploy(SmartFundETHFactory))
-
-    .then(() => deployer.deploy(PermittedStabels, STABLE_COIN_ADDRESS))
 
     .then(() => deployer.deploy(
       SmartFundRegistry,
@@ -67,6 +71,7 @@ module.exports = (deployer, network, accounts) => {
       PermittedStabels.address,
       STABLE_COIN_ADDRESS,
       SmartFundETHFactory.address,
-      SmartFundUSDFactory.address
+      SmartFundUSDFactory.address,
+      COMPOUND_CETHER
     ))
 }
