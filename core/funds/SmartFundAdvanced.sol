@@ -6,7 +6,7 @@ pragma solidity ^0.4.24;
 * therefore, this logic must be separate
 *
 * NOTE: maybe in future, if we don't need implement borrow logic, and no need bind
-* debt with msg.sender, we can do Compound logic as addition portal  
+* debt with msg.sender, we can do Compound logic as addition portal
 */
 
 import "../../compound/CEther.sol";
@@ -91,6 +91,49 @@ contract SmartFundAdvanced is SmartFundCore {
       isCTOKEN[_cToken] = true;
       // Add compound token
       compoundTokenAddresses.push(_cToken);
+    }
+  }
+
+  /**
+  * @dev sell certain percent of Ctokens to Compound
+  *
+  * @param _percent      percent from 1 to 100
+  * @param _cToken       cToken address
+  */
+  function compoundRedeemByPercent(uint _percent, address _cToken) external onlyOwner {
+    uint256 amount = (_percent == 100)
+    // if 100 return all
+    ? ERC20(address(_cToken)).balanceOf(address(this))
+    // else calculate percent
+    : getPercentFromCTokenBalance(_percent, address(_cToken));
+
+    if(_cToken == address(cEther)){
+      cEther.redeem(amount);
+    }else{
+      CToken cToken = CToken(_cToken);
+      cToken.redeem(amount);
+    }
+  }
+
+
+  /**
+  * @dev return percent of compound cToken balance
+  *
+  * @param _percent       amount of ERC20 or ETH
+  * @param _cToken       cToken address
+  */
+  function getPercentFromCTokenBalance(uint _percent, address _cToken)
+  public
+  view
+  returns(uint256)
+  {
+    if(_percent > 0 && _percent <= 100){
+      uint256 currectBalance = ERC20(_cToken).balanceOf(address(this));
+      return currectBalance.div(100).mul(_percent);
+    }
+    else{
+      // not correct percent
+      return 0;
     }
   }
 
