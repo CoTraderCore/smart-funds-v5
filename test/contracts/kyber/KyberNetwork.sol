@@ -11,7 +11,7 @@ contract KyberNetwork is Ownable {
 
   event ExecuteTrade(address indexed sender, ERC20 src, ERC20 dest, uint actualSrcAmount, uint actualDestAmount);
 
-  function KyberNetwork(address _tokenOracle) public {
+  constructor(address _tokenOracle) public {
     tokenOracle = TokenOracleInterface(_tokenOracle);
   }
 
@@ -58,7 +58,7 @@ contract KyberNetwork is Ownable {
     } else {
       dest.transfer(destAddress, destAmount);
     }
-    
+
     emit ExecuteTrade(msg.sender, src, dest, srcAmount, destAmount);
 
     return destAmount;
@@ -71,10 +71,10 @@ contract KyberNetwork is Ownable {
   function findBestRate(ERC20 src, ERC20 dest, uint srcQty) public view returns(uint, uint) {
     uint256 bestReserve = 0;
     uint256 bestRate = tokenOracle.convert(src, dest, DECIMALS);
-    
+
     return (bestReserve, bestRate);
   }
-    
+
   function getExpectedRate(ERC20 src, ERC20 dest, uint srcQty) public view returns (uint expectedRate, uint slippageRate) {
     expectedRate = tokenOracle.convert(src, dest, DECIMALS);
     slippageRate = 0;

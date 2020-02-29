@@ -10,7 +10,7 @@ contract Token is StandardToken {
   // uint256 public constant TOTAL_SUPPLY = 10000 * (10 ** uint256(DECIMALS));
   uint256 public constant TOTAL_SUPPLY = 1000000;
 
-  function Token() public {
+  constructor() public {
     totalSupply_ = TOTAL_SUPPLY;
     balances[msg.sender] = TOTAL_SUPPLY;
   }

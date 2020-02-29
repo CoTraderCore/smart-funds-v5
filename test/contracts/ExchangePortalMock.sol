@@ -1,16 +1,15 @@
 pragma solidity ^0.4.24;
 
-import "../../contracts/ExchangePortalInterface.sol";
 import "../../contracts/zeppelin-solidity/contracts/math/SafeMath.sol";
 import "../../contracts/zeppelin-solidity/contracts/token/ERC20/ERC20.sol";
 
-// Exchange Portal Mock, 
-contract ExchangePortalMock is ExchangePortalInterface {
+// Exchange Portal Mock,
+contract ExchangePortalMock {
 
   enum ExchangeType { Kyber }
-  
+
   using SafeMath for uint256;
-  
+
   // KyberExchange recognizes ETH by this address, airswap recognizes ETH as address(0x0)
   ERC20 constant private ETH_TOKEN_ADDRESS = ERC20(0x00eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee);
   address constant private NULL_ADDRESS = address(0);
@@ -36,7 +35,7 @@ contract ExchangePortalMock is ExchangePortalInterface {
     require(_source != _destination);
 
     uint256 receivedAmount;
-    
+
     if (_source == ETH_TOKEN_ADDRESS) {
       require(msg.value == _sourceAmount);
     } else {
@@ -46,7 +45,7 @@ contract ExchangePortalMock is ExchangePortalInterface {
     if (_type == uint(ExchangeType.Kyber)) {
       uint256 maxDestinationAmount = uint256(_additionalArgs[0]);
       uint256 minConversionRate = uint256(_additionalArgs[1]);
-      address walletId = address(_additionalArgs[2]);      
+      address walletId = address(_additionalArgs[2]);
 
       receivedAmount = _tradeKyber(
         _source,
@@ -61,7 +60,7 @@ contract ExchangePortalMock is ExchangePortalInterface {
       // unknown exchange type
       revert();
     }
-    
+
     // Check if Ether was received
     if (_destination == ETH_TOKEN_ADDRESS) {
       (msg.sender).transfer(receivedAmount);
@@ -95,7 +94,7 @@ contract ExchangePortalMock is ExchangePortalInterface {
       _transferFromSenderAndApproveTo(_source, _sourceAmount, NULL_ADDRESS);
       destinationReceived = getKyberValue(_source, _destination, _sourceAmount);
     }
-    
+
     return destinationReceived;
   }
 
@@ -107,7 +106,7 @@ contract ExchangePortalMock is ExchangePortalInterface {
 
   function getValue(address _from, address _to, uint256 _amount) public view returns (uint256) {
     uint256 kyberValue = getKyberValue(_from, _to, _amount);
-    
+
     return kyberValue;
   }
 
@@ -116,7 +115,7 @@ contract ExchangePortalMock is ExchangePortalInterface {
   // * kyber.findBestRate
   function getKyberValue(address _from, address _to, uint256 _amount) public view returns (uint256) {
     if (_to == address(ETH_TOKEN_ADDRESS)) {
-      return _amount.mul(div).div(mul);      
+      return _amount.mul(div).div(mul);
     } else if (_from == address(ETH_TOKEN_ADDRESS)) {
       return _amount.mul(mul).div(div);
     } else {

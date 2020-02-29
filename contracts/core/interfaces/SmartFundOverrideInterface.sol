@@ -1,3 +1,4 @@
+import "../../zeppelin-solidity/contracts/token/ERC20/ERC20.sol";
 // DAI and ETH have different implements of this methods but we require implement this method
 contract SmartFundOverrideInterface {
   function calculateFundValue() public view returns (uint256);

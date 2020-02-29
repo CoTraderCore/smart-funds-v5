@@ -1,3 +1,5 @@
+pragma solidity ^0.4.24;
+
 contract UniswapExchangeInterface {
     // Address of ERC20 token sold on this exchange
     function tokenAddress() external view returns (address token);

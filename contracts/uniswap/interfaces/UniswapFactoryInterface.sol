@@ -1,3 +1,5 @@
+pragma solidity ^0.4.24;
+
 contract UniswapFactoryInterface {
     // Public Variables
     address public exchangeTemplate;

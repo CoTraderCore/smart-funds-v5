@@ -1,3 +1,6 @@
+pragma solidity ^0.4.24;
+
+import "./CToken.sol";
 contract CEther{
     function transfer(address dst, uint256 amount) external returns (bool);
     function transferFrom(address src, address dst, uint256 amount) external returns (bool);

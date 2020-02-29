@@ -10,7 +10,7 @@ contract EOS is StandardToken {
   // uint256 public constant INITIAL_SUPPLY = 10000 * (10 ** uint256(decimals));
   uint256 public constant INITIAL_SUPPLY = 10000;
 
-  function EOS() public {
+  constructor() public {
     totalSupply_ = INITIAL_SUPPLY;
     balances[msg.sender] = INITIAL_SUPPLY;
   }

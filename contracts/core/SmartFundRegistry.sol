@@ -5,8 +5,8 @@ import "./interfaces/SmartFundUSDFactoryInterface.sol";
 import "./interfaces/PermittedExchangesInterface.sol";
 import "./interfaces/PermittedPoolsInterface.sol";
 import "./interfaces/PermittedStabelsInterface.sol";
-import "../../zeppelin-solidity/contracts/ownership/Ownable.sol";
-import "../../zeppelin-solidity/contracts/token/ERC20/ERC20.sol";
+import "../zeppelin-solidity/contracts/ownership/Ownable.sol";
+import "../zeppelin-solidity/contracts/token/ERC20/ERC20.sol";
 /*
 * The SmartFundRegistry is used to manage the creation and permissions of SmartFund contracts
 */

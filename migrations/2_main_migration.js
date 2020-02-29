@@ -15,15 +15,14 @@ const SmartFundUSDFactory = artifacts.require('./core/SmartFundUSDFactory.sol')
 
 const SmartFundRegistry = artifacts.require('./core/SmartFundRegistry.sol')
 
-const PARASWAP_NETWORK_ADDRESS = ""
-const PARASWAP_PRICE_ADDRESS = ""
-const BANCOR_REGISTRY = ""
-const BANCOR_ETH_WRAPPER = ""
-const PRICE_FEED_ADDRESS = ""
+const PARASWAP_NETWORK_ADDRESS = "0xF92C1ad75005E6436B4EE84e88cB23Ed8A290988"
+const PARASWAP_PRICE_ADDRESS = "0xC6A3eC2E62A932B94Bac51B6B9511A4cB623e2E5"
+const BANCOR_REGISTRY = "0x178c68aefdcae5c9818e43addf6a2b66df534ed5"
+const BANCOR_ETH_WRAPPER = "0xc0829421C1d260BD3cB3E0F06cfE2D52db2cE315"
 const PLATFORM_FEE = 1000
-const STABLE_COIN_ADDRESS = ""
-const UNISWAP_FACTORY = ""
-const COMPOUND_CETHER = ""
+const STABLE_COIN_ADDRESS = "0x6B175474E89094C44Da98b954EedeAC495271d0F"
+const UNISWAP_FACTORY = "0xc0a47dFe034B400B47bDaD5FecDa2621de6c4d95"
+const COMPOUND_CETHER = "0x4ddc2d193948926d02f9b1fe9e1daa0718270ed5"
 
 
 
@@ -48,7 +47,7 @@ module.exports = (deployer, network, accounts) => {
 
     .then(() => deployer.deploy(ExchangePortal,
       PARASWAP_NETWORK_ADDRESS,
-      PRICE_FEED_ADDRESS,
+      PARASWAP_PRICE_ADDRESS,
       ParaswapParams.address,
       GetBancorAddressFromRegistry.address,
       BANCOR_ETH_WRAPPER,
