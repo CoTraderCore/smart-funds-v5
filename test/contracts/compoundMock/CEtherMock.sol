@@ -18,7 +18,7 @@ contract CEtherMock is StandardToken, DetailedERC20 {
   function mint() external payable {
     require(msg.value > 0);
     // transfer cETHer
-    // for mock 1 ETH = 1 cETH 
+    // for mock 1 ETH = 1 cETH
     ERC20(address(this)).transfer(msg.sender, msg.value);
   }
   function redeem(uint redeemTokens) external returns (uint){
@@ -26,7 +26,7 @@ contract CEtherMock is StandardToken, DetailedERC20 {
     msg.sender.transfer(redeemTokens);
   }
   function redeemUnderlying(uint redeemAmount) external returns (uint){
-    require(ERC20(address(this)).transferFrom(msg.sender, address(this), redeemTokens));
+    require(ERC20(address(this)).transferFrom(msg.sender, address(this), redeemAmount));
     msg.sender.transfer(redeemAmount);
   }
 }

@@ -88,6 +88,11 @@ contract ExchangePortalMock {
     div = _div;
   }
 
+  function _transferFromSenderAndApproveTo(ERC20 _source, uint256 _sourceAmount, address _to) private {
+    require(_source.transferFrom(msg.sender, this, _sourceAmount));
+    _source.approve(_to, _sourceAmount);
+  }
+
   function pay() public payable {}
 
   function() public payable {}

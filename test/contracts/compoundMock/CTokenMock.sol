@@ -26,7 +26,7 @@ contract CTokenMock is StandardToken, DetailedERC20 {
     msg.sender.transfer(redeemTokens);
   }
   function redeemUnderlying(uint redeemAmount) external returns (uint){
-    require(ERC20(address(this)).transferFrom(msg.sender, address(this), redeemTokens));
+    require(ERC20(address(this)).transferFrom(msg.sender, address(this), redeemAmount));
     msg.sender.transfer(redeemAmount);
   }
 }

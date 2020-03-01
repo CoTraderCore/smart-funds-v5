@@ -15,7 +15,6 @@ require('chai')
 const SmartFundETHFactory = artifacts.require('./core/funds/SmartFundETHFactory.sol')
 const SmartFundUSDFactory = artifacts.require('./core/funds/SmartFundUSDFactory.sol')
 const SmartFundRegistry = artifacts.require('./core/SmartFundRegistry.sol')
-const Token = artifacts.require('./tokens/Token')
 
 
 contract('SmartFundRegistry', function([userOne, userTwo, userThree]) {

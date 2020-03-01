@@ -13,24 +13,25 @@ require('chai')
   .should()
 
 const SmartFundETH = artifacts.require('./core/funds/SmartFundETH.sol')
-
+const Token = artifacts.require('./tokens/Token')
+const ExchangePortalMock = artifacts.require('./portalsMock/ExchangePortalMock')
 
 contract('SmartFundETH', function([userOne, userTwo, userThree]) {
   beforeEach(async function() {
     this.ETH_TOKEN_ADDRESS = '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE'
-
+    this.exchangePortal = await ExchangePortal.new(1, 1)
 
     this.smartFundETH = await SmartFundETH.new(
       '0x0000000000000000000000000000000000000000', //address _owner,
-      'TEST ETH FUND', // string _name,
-      20, // uint256 _successFee,
-      1000, // uint256 _platformFee,
+      'TEST ETH FUND',                              // string _name,
+      20,                                           // uint256 _successFee,
+      1000,                                         // uint256 _platformFee,
       '0x0000000000000000000000000000000000000000', // address _platformAddress,
-      '0x0000000000000000000000000000000000000000', // address _exchangePortalAddress,
+      this.exchangePortal,                          // address _exchangePortalAddress,
       '0x0000000000000000000000000000000000000000', // address _permittedExchangesAddress,
       '0x0000000000000000000000000000000000000000', // address _permittedPoolsAddress,
       '0x0000000000000000000000000000000000000000', // address _poolPortalAddress,
-      '0x0000000000000000000000000000000000000000' // address _cEther
+      '0x0000000000000000000000000000000000000000'  // address _cEther
     )
   })
 
