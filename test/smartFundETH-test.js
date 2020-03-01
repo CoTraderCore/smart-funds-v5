@@ -19,7 +19,7 @@ const ExchangePortalMock = artifacts.require('./portalsMock/ExchangePortalMock')
 contract('SmartFundETH', function([userOne, userTwo, userThree]) {
   beforeEach(async function() {
     this.ETH_TOKEN_ADDRESS = '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE'
-    this.exchangePortal = await ExchangePortal.new(1, 1)
+    this.exchangePortal = await ExchangePortalMock.new(1, 1)
 
     this.smartFundETH = await SmartFundETH.new(
       '0x0000000000000000000000000000000000000000', //address _owner,
@@ -27,7 +27,7 @@ contract('SmartFundETH', function([userOne, userTwo, userThree]) {
       20,                                           // uint256 _successFee,
       1000,                                         // uint256 _platformFee,
       '0x0000000000000000000000000000000000000000', // address _platformAddress,
-      this.exchangePortal,                          // address _exchangePortalAddress,
+      this.exchangePortal.address,                  // address _exchangePortalAddress,
       '0x0000000000000000000000000000000000000000', // address _permittedExchangesAddress,
       '0x0000000000000000000000000000000000000000', // address _permittedPoolsAddress,
       '0x0000000000000000000000000000000000000000', // address _poolPortalAddress,
