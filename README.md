@@ -8,5 +8,9 @@
 
 # TODO
 ```
-Unit tests not finished 
+Unit tests not finished
+
+Run test 
+1) npm run ganache
+2) truffle test
 ```

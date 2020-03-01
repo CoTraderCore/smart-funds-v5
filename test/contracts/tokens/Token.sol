@@ -1,17 +1,16 @@
 pragma solidity ^0.4.18;
 
 import "../../../contracts/zeppelin-solidity/contracts/token/ERC20/StandardToken.sol";
+import "../../../contracts/zeppelin-solidity/contracts/token/ERC20/DetailedERC20.sol";
 
-contract Token is StandardToken {
-  string public constant NAME = "Token";
-  string public constant SYMBOL = "TKN";
-  uint8 public constant decimals = 18;
-
-  // uint256 public constant TOTAL_SUPPLY = 10000 * (10 ** uint256(DECIMALS));
-  uint256 public constant TOTAL_SUPPLY = 1000000;
-
-  constructor() public {
-    totalSupply_ = TOTAL_SUPPLY;
-    balances[msg.sender] = TOTAL_SUPPLY;
+contract Token is StandardToken, DetailedERC20 {
+  constructor(string _name, string _symbol, uint8 _decimals, uint256 _totalSupply)
+    DetailedERC20(_name, _symbol, _decimals)
+    public
+  {
+    // Initialize totalSupply
+    totalSupply_ = _totalSupply;
+    // Initialize Holder
+    balances[msg.sender] = _totalSupply;
   }
 }

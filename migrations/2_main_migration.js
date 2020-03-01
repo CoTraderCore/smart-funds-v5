@@ -25,52 +25,51 @@ const UNISWAP_FACTORY = "0xc0a47dFe034B400B47bDaD5FecDa2621de6c4d95"
 const COMPOUND_CETHER = "0x4ddc2d193948926d02f9b1fe9e1daa0718270ed5"
 
 
+module.exports = async (deployer, network, accounts) => {
+    await deployer.deploy(ParaswapParams)
 
-module.exports = (deployer, network, accounts) => {
-  deployer
-    .then(() => deployer.deploy(ParaswapParams))
-
-    .then(() => deployer.deploy(GetBancorAddressFromRegistry, BANCOR_REGISTRY))
-
-    .then(() => deployer.deploy(GetRatioForBancorAssets, GetBancorAddressFromRegistry.address))
-
-    .then(() => deployer.deploy(PoolPortal,
-      GetBancorAddressFromRegistry.address,
-      GetRatioForBancorAssets.address,
-      BANCOR_ETH_WRAPPER,
-      UNISWAP_FACTORY
-    ))
-
-    .then(() => deployer.deploy(PermittedPools, PoolPortal.address))
-
-    .then(() => deployer.deploy(PermittedStabels, STABLE_COIN_ADDRESS))
-
-    .then(() => deployer.deploy(ExchangePortal,
-      PARASWAP_NETWORK_ADDRESS,
-      PARASWAP_PRICE_ADDRESS,
-      ParaswapParams.address,
-      GetBancorAddressFromRegistry.address,
-      BANCOR_ETH_WRAPPER,
-      PermittedStabels.address,
-      PoolPortal.address
-    ))
-    .then(() => deployer.deploy(PermittedExchanges, ExchangePortal.address))
-
-    .then(() => deployer.deploy(SmartFundETHFactory))
-
-    .then(() => deployer.deploy(SmartFundETHFactory))
-
-    .then(() => deployer.deploy(
-      SmartFundRegistry,
-      PLATFORM_FEE,
-      PermittedExchanges.address,
-      ExchangePortal.address,
-      PermittedPools.address,
-      PoolPortal.address,
-      PermittedStabels.address,
-      STABLE_COIN_ADDRESS,
-      SmartFundETHFactory.address,
-      SmartFundUSDFactory.address,
-      COMPOUND_CETHER
-    ))
+    // await deployer.deploy(GetBancorAddressFromRegistry, BANCOR_REGISTRY)
+    //
+    // await deployer.deploy(GetRatioForBancorAssets, GetBancorAddressFromRegistry.address)
+    //
+    // await deployer.deploy(PoolPortal,
+    //   GetBancorAddressFromRegistry.address,
+    //   GetRatioForBancorAssets.address,
+    //   BANCOR_ETH_WRAPPER,
+    //   UNISWAP_FACTORY
+    // )
+    //
+    // await deployer.deploy(PermittedPools, PoolPortal.address)
+    //
+    // await deployer.deploy(PermittedStabels, STABLE_COIN_ADDRESS)
+    //
+    // await deployer.deploy(ExchangePortal,
+    //   PARASWAP_NETWORK_ADDRESS,
+    //   PARASWAP_PRICE_ADDRESS,
+    //   ParaswapParams.address,
+    //   GetBancorAddressFromRegistry.address,
+    //   BANCOR_ETH_WRAPPER,
+    //   PermittedStabels.address,
+    //   PoolPortal.address
+    // )
+    //
+    // await deployer.deploy(PermittedExchanges, ExchangePortal.address)
+    //
+    // await deployer.deploy(SmartFundETHFactory)
+    //
+    // await deployer.deploy(SmartFundETHFactory)
+    //
+    // await deployer.deploy(
+    //   SmartFundRegistry,
+    //   PLATFORM_FEE,
+    //   PermittedExchanges.address,
+    //   ExchangePortal.address,
+    //   PermittedPools.address,
+    //   PoolPortal.address,
+    //   PermittedStabels.address,
+    //   STABLE_COIN_ADDRESS,
+    //   SmartFundETHFactory.address,
+    //   SmartFundUSDFactory.address,
+    //   COMPOUND_CETHER
+    // )
 }
