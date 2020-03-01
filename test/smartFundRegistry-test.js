@@ -40,18 +40,22 @@ contract('SmartFundRegistry', function([userOne, userTwo, userThree]) {
     )
   })
 
-  describe('INIT', function() {
+  describe('INIT registry', function() {
     it('Correct funds initial amount', async function() {
       const totalFunds = await this.registry.totalSmartFunds()
       assert.equal(0, totalFunds)
     })
   })
 
-  describe('Create ETH fund', function() {
-    it('should be able create new ETH fund', async function() {
-      await this.registry.createSmartFund("TEST", 20, false)
-      const totalFunds = await this.registry.totalSmartFunds()
+  describe('Create funds', function() {
+    it('should be able create new ETH and USD funds', async function() {
+      await this.registry.createSmartFund("ETH Fund", 20, false)
+      let totalFunds = await this.registry.totalSmartFunds()
       assert.equal(1, totalFunds)
+
+      await this.registry.createSmartFund("USD Fund", 20, true)
+      totalFunds = await this.registry.totalSmartFunds()
+      assert.equal(2, totalFunds)
     })
   })
 })

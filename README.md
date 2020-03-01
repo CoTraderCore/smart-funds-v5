@@ -6,11 +6,20 @@
 2) Add Uniswap pools
 ```
 
-# TODO
+# Core unit tests todo
 ```
-Unit tests not finished
+0 write mocks for Uniswap, Bancor, Compound, DAOWallet
+1 trade/withdraw Compound tokens
+2 trade/withdraw Bancor and Uniswap pools
+3 cut 10% from manager profit to DAOWallet
+4 test trade/withdraw for all available assets
+```
 
-Run test 
-1) npm run ganache
+# Run tests
+
+```
+NOTE: in separate console
+
+1) npm run ganache  
 2) truffle test
 ```
