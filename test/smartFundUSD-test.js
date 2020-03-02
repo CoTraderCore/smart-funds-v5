@@ -25,8 +25,8 @@ contract('SmartFundUSD', function([userOne, userTwo, userThree]) {
     this.smartFundUSD = await SmartFundUSD.new(
       '0x0000000000000000000000000000000000000000', //address _owner,
       'TEST USD FUND',                              // string _name,
-      20,                                           // uint256 _successFee,
-      1000,                                         // uint256 _platformFee,
+      1000,                                         // uint256 _successFee,
+      20,                                           // uint256 _platformFee,
       '0x0000000000000000000000000000000000000000', // address _platformAddress,
       this.exchangePortal.address,                  // address _exchangePortalAddress,
       '0x0000000000000000000000000000000000000000', // address _permittedExchangesAddress,

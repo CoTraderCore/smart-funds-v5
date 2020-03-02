@@ -27,7 +27,8 @@ contract ExchangePortalMock {
     uint256 _sourceAmount,
     ERC20 _destination,
     uint256 _type,
-    bytes32[] _additionalArgs
+    bytes32[] _additionalArgs,
+    bytes _additionalData
   ) external payable returns (uint256) {
     require(_source != _destination);
 
