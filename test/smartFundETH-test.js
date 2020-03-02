@@ -78,12 +78,10 @@ contract('SmartFundETH', function([userOne, userTwo, userThree]) {
       assert.equal((await this.smartFundETH.getAllTokenAddresses()).length, 1) // Ether is initial token
       assert.equal(await this.smartFundETH.calculateFundValue(), 0)
     })
-    })
+  })
 
-
-
-    describe('Profit', function() {
-      it('Fund manager should be able to withdraw after investor withdraws', async function() {
+  describe('Profit', function() {
+    it('Fund manager should be able to withdraw after investor withdraws', async function() {
         // give exchange portal contract some money
         await this.xxxERC.transfer(this.exchangePortal.address, toWei(String(50)))
         await this.exchangePortal.pay({ from: userOne, value: toWei(String(3))})
@@ -148,7 +146,7 @@ contract('SmartFundETH', function([userOne, userTwo, userThree]) {
         assert.equal(await web3.eth.getBalance(this.smartFundETH.address), 0)
       })
 
-      it('Should properly calculate profit after another user made profit and withdrew', async function() {
+   it('Should properly calculate profit after another user made profit and withdrew', async function() {
         // give exchange portal contract some money
         await this.xxxERC.transfer(this.exchangePortal.address, toWei(String(50)))
         await this.exchangePortal.pay({ from: userOne, value: toWei(String(5)) })
@@ -252,10 +250,10 @@ contract('SmartFundETH', function([userOne, userTwo, userThree]) {
           toWei(String(0.2))
         )
       })
-    })
+  })
 
-    describe('Withdraw', function() {
-    it('should be able to withdraw all deposited funds', async function() {
+  describe('Withdraw', function() {
+   it('should be able to withdraw all deposited funds', async function() {
       const totalShares = await this.smartFundETH.totalShares()
       assert.equal(totalShares, 0)
 

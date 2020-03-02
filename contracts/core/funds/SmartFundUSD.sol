@@ -138,7 +138,7 @@ contract SmartFundUSD is SmartFundUSDInterface, SmartFundAdvanced {
     // get all ERC20 addresses and balance
     for (uint256 i = 1; i < tokenAddresses.length; i++) {
       // no need get current USD token and cTokens
-      if(tokenAddresses[i] != stableCoinAddress || !isCTOKEN[tokenAddresses[i]]){
+      if(tokenAddresses[i] != stableCoinAddress && !isCTOKEN[tokenAddresses[i]]){
         fromAddresses[i-1] = tokenAddresses[i];
         amounts[i-1] = ERC20(tokenAddresses[i]).balanceOf(address(this));
       }
