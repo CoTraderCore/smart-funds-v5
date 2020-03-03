@@ -47,7 +47,7 @@ contract SmartFundETH is SmartFundETHInterface, SmartFundAdvanced {
     _permittedExchangesAddress,
     _permittedPoolsAddress,
     _poolPortalAddress,
-    _cEther 
+    _cEther
   )
   public{}
 
@@ -105,12 +105,14 @@ contract SmartFundETH is SmartFundETHInterface, SmartFundAdvanced {
     uint cTokensAndETHlength = compoundTokenAddresses.length + 1;
     address[] memory fromAddresses = new address[](tokenAddresses.length - cTokensAndETHlength);
     uint256[] memory amounts = new uint256[](tokenAddresses.length - cTokensAndETHlength);
+    uint8 ercIndex = 0;
 
     for (uint256 i = 1; i < tokenAddresses.length; i++) {
       // No need for cToken
       if(!isCTOKEN[tokenAddresses[i]]){
-        fromAddresses[i-1] = tokenAddresses[i];
-        amounts[i-1] = ERC20(tokenAddresses[i]).balanceOf(address(this));
+        fromAddresses[ercIndex] = tokenAddresses[i];
+        amounts[ercIndex] = ERC20(tokenAddresses[i]).balanceOf(address(this));
+        ercIndex++;
       }
     }
     // Ask the Exchange Portal for the value of all the funds tokens in eth

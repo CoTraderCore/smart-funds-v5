@@ -20,7 +20,6 @@ const ExchangePortalMock = artifacts.require('./portalsMock/ExchangePortalMock')
 contract('SmartFundETH', function([userOne, userTwo, userThree]) {
   beforeEach(async function() {
     this.ETH_TOKEN_ADDRESS = '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE'
-    this.exchangePortal = await ExchangePortalMock.new(1, 1)
 
     // Deploy xxx Token
     this.xxxERC = await Token.new(
@@ -30,6 +29,18 @@ contract('SmartFundETH', function([userOne, userTwo, userThree]) {
       "1000000000000000000000000"
     )
 
+    // Deploy DAI Token
+    this.DAI = await Token.new(
+      "DAI Stable Coin",
+      "DAI",
+      18,
+      "1000000000000000000000000"
+    )
+
+    // Deploy exchangePortal
+    this.exchangePortal = await ExchangePortalMock.new(1, 1, this.DAI.address)
+
+    // Deploy ETH fund 
     this.smartFundETH = await SmartFundETH.new(
       '0x0000000000000000000000000000000000000000', //address _owner,
       'TEST ETH FUND',                              // string _name,

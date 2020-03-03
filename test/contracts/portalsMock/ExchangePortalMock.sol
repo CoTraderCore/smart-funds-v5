@@ -14,12 +14,14 @@ contract ExchangePortalMock {
   // similarly X token = X*(div/mul) ether for every token where X is the amount
   uint256 public mul;
   uint256 public div;
+  address public stableCoinAddress;
 
   event Trade(address trader, address src, uint256 srcAmount, address dest, uint256 destReceived, uint8 exchangeType);
 
-  constructor(uint256 _mul, uint256 _div) public {
+  constructor(uint256 _mul, uint256 _div, address _stableCoinAddress) public {
     mul = _mul;
     div = _div;
+    stableCoinAddress = _stableCoinAddress;
   }
 
   function trade(
@@ -64,11 +66,21 @@ contract ExchangePortalMock {
   // * kyber.getExpectedRate
   // * kyber.findBestRate
   function getValue(address _from, address _to, uint256 _amount) public view returns (uint256) {
+    // ETH case (can change rate)
     if (_to == address(ETH_TOKEN_ADDRESS)) {
       return _amount.mul(div).div(mul);
     } else if (_from == address(ETH_TOKEN_ADDRESS)) {
       return _amount.mul(mul).div(div);
-    } else {
+    }
+    // DAI Case (can change rate)
+    else if(_to == stableCoinAddress) {
+      return _amount.mul(div).div(mul);
+    }
+    else if(_from == stableCoinAddress) {
+      return _amount.mul(div).div(mul);
+    }
+    // ERC case 
+    else {
       return _amount;
     }
   }
