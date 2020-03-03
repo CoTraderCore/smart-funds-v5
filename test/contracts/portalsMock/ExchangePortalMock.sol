@@ -79,7 +79,7 @@ contract ExchangePortalMock {
     else if(_from == stableCoinAddress) {
       return _amount.mul(div).div(mul);
     }
-    // ERC case 
+    // ERC case
     else {
       return _amount;
     }

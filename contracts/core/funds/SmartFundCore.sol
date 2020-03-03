@@ -148,7 +148,7 @@ contract SmartFundCore is SmartFundOverrideInterface, Ownable, ERC20 {
     else{
       platformAddress = _platformAddress;
     }
-    
+
     // Initial Token is Ether
     tokenAddresses.push(address(ETH_TOKEN_ADDRESS));
 

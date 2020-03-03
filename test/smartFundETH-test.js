@@ -40,7 +40,7 @@ contract('SmartFundETH', function([userOne, userTwo, userThree]) {
     // Deploy exchangePortal
     this.exchangePortal = await ExchangePortalMock.new(1, 1, this.DAI.address)
 
-    // Deploy ETH fund 
+    // Deploy ETH fund
     this.smartFundETH = await SmartFundETH.new(
       '0x0000000000000000000000000000000000000000', //address _owner,
       'TEST ETH FUND',                              // string _name,
@@ -135,8 +135,14 @@ contract('SmartFundETH', function([userOne, userTwo, userThree]) {
 
         assert.equal(await web3.eth.getBalance(this.smartFundETH.address), toWei(String(2)))
 
+        const totalWeiDeposited = await this.smartFundETH.totalWeiDeposited()
+        assert.equal(fromWei(totalWeiDeposited), 1)
+
         // user1 now withdraws 190 ether, 90 of which are profit
         await this.smartFundETH.withdraw(0, { from: userOne })
+
+        const totalWeiWithdrawn = await this.smartFundETH.totalWeiWithdrawn()
+        assert.equal(fromWei(totalWeiWithdrawn), 1.9)
 
         assert.equal(await this.smartFundETH.calculateFundValue(), toWei(String(0.1)))
 

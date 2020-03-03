@@ -134,12 +134,12 @@ contract('SmartFundUSD', function([userOne, userTwo, userThree]) {
           }
         )
 
+        assert.equal((await this.smartFundUSD.getAllTokenAddresses()).length, 3)
+
         assert.equal(await this.DAI.balanceOf(this.smartFundUSD.address), 0)
 
         // 1 token is now worth 2 DAI
         await this.exchangePortal.setRatio(1, 2)
-
-        assert.equal((await this.smartFundUSD.getAllTokenAddresses()).length, 3)
 
         assert.equal(await this.smartFundUSD.calculateFundValue(), toWei(String(2)))
 
@@ -158,14 +158,24 @@ contract('SmartFundUSD', function([userOne, userTwo, userThree]) {
 
         assert.equal(await this.DAI.balanceOf(this.smartFundUSD.address), toWei(String(2)))
 
-        // let fV = await this.smartFundUSD.calculateFundValue()
-        // assert.equal(fromWei(fV), 0)
+        const totalWeiDeposited = await this.smartFundUSD.totalWeiDeposited()
+        assert.equal(fromWei(totalWeiDeposited), 1)
 
         // user1 now withdraws 190 DAI, 90 of which are profit
         await this.smartFundUSD.withdraw(0, { from: userOne })
 
-        // assert.equal(await this.smartFundUSD.calculateFundValue(), toWei(String(0.1)))
+        const totalWeiWithdrawn = await this.smartFundUSD.totalWeiWithdrawn()
+        assert.equal(fromWei(totalWeiWithdrawn), 1.9)
+
         //
+        // const fB = await this.DAI.balanceOf(this.smartFundUSD.address)
+        // assert.equal(fromWei(fB), 0.1)
+
+        // let fV = await this.smartFundUSD.calculateFundValue()
+        // assert.equal(fromWei(fV), 0)
+
+        // assert.equal(await this.smartFundUSD.calculateFundValue(), toWei(String(0.1)))
+
         // const {
         //   fundManagerRemainingCut,
         //   fundValue,
