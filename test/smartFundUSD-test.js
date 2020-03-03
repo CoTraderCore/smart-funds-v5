@@ -156,6 +156,8 @@ contract('SmartFundUSD', function([userOne, userTwo, userThree]) {
           }
         )
 
+        assert.equal((await this.smartFundUSD.getAllTokenAddresses()).length, 3)
+
         assert.equal(await this.DAI.balanceOf(this.smartFundUSD.address), toWei(String(2)))
 
         const totalWeiDeposited = await this.smartFundUSD.totalWeiDeposited()
@@ -167,30 +169,27 @@ contract('SmartFundUSD', function([userOne, userTwo, userThree]) {
         const totalWeiWithdrawn = await this.smartFundUSD.totalWeiWithdrawn()
         assert.equal(fromWei(totalWeiWithdrawn), 1.9)
 
-        //
-        // const fB = await this.DAI.balanceOf(this.smartFundUSD.address)
-        // assert.equal(fromWei(fB), 0.1)
 
-        // let fV = await this.smartFundUSD.calculateFundValue()
-        // assert.equal(fromWei(fV), 0)
+        const fB = await this.DAI.balanceOf(this.smartFundUSD.address)
+        assert.equal(fromWei(fB), 0.1)
+        
+        assert.equal(await this.smartFundUSD.calculateFundValue(), toWei(String(0.1)))
 
-        // assert.equal(await this.smartFundUSD.calculateFundValue(), toWei(String(0.1)))
+        const {
+          fundManagerRemainingCut,
+          fundValue,
+          fundManagerTotalCut,
+        } =
+        await this.smartFundUSD.calculateFundManagerCut()
 
-        // const {
-        //   fundManagerRemainingCut,
-        //   fundValue,
-        //   fundManagerTotalCut,
-        // } =
-        // await this.smartFundUSD.calculateFundManagerCut()
-        //
-        // assert.equal(fundValue, toWei(String(0.1)))
-        // assert.equal(fundManagerRemainingCut, toWei(String(0.1)))
-        // assert.equal(fundManagerTotalCut, toWei(String(0.1)))
-        //
-        //   // // FM now withdraws their profit
-        // await this.smartFundUSD.fundManagerWithdraw({ from: userOne })
-        // // Manager, can get his 10%, and remains 0.0001996 it's  platform commision
-        // assert.equal(await this.DAI.balanceOf(this.smartFundUSD.address), 0)
+        assert.equal(fundValue, toWei(String(0.1)))
+        assert.equal(fundManagerRemainingCut, toWei(String(0.1)))
+        assert.equal(fundManagerTotalCut, toWei(String(0.1)))
+
+          // // FM now withdraws their profit
+        await this.smartFundUSD.fundManagerWithdraw({ from: userOne })
+        // Manager, can get his 10%, and remains 0.0001996 it's  platform commision
+        assert.equal(await this.DAI.balanceOf(this.smartFundUSD.address), 0)
       })
 
    // it('Should properly calculate profit after another user made profit and withdrew', async function() {

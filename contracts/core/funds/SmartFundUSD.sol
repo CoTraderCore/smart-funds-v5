@@ -69,7 +69,7 @@ contract SmartFundUSD is SmartFundUSDInterface, SmartFundAdvanced {
     // Initial stable coin address
     stableCoinAddress = _stableCoinAddress;
     // Push stable coin in tokens list
-    tokenAddresses.push(_stableCoinAddress);
+    _addToken(_stableCoinAddress);
   }
 
   /**
