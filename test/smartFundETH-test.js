@@ -44,12 +44,12 @@ contract('SmartFundETH', function([userOne, userTwo, userThree]) {
 
     // Deploy ETH fund
     smartFundETH = await SmartFundETH.new(
-      '0x0000000000000000000000000000000000000000', //address _owner,
+      '0x0000000000000000000000000000000000000000', // address _owner,
       'TEST ETH FUND',                              // string _name,
-      successFee,                                         // uint256 _successFee,
-      platformFee,                                            // uint256 _platformFee,
+      successFee,                                   // uint256 _successFee,
+      platformFee,                                  // uint256 _platformFee,
       '0x0000000000000000000000000000000000000000', // address _platformAddress,
-      exchangePortal.address,                  // address _exchangePortalAddress,
+      exchangePortal.address,                       // address _exchangePortalAddress,
       '0x0000000000000000000000000000000000000000', // address _permittedExchangesAddress,
       '0x0000000000000000000000000000000000000000', // address _permittedPoolsAddress,
       '0x0000000000000000000000000000000000000000', // address _poolPortalAddress,
@@ -325,7 +325,7 @@ contract('SmartFundETH', function([userOne, userTwo, userThree]) {
     })
   })
 
-  //
+
   describe('Fund Manager', function() {
     it('should calculate fund manager and platform cut when no profits', async function() {
       await deployContracts(1500, 1000)
@@ -343,15 +343,15 @@ contract('SmartFundETH', function([userOne, userTwo, userThree]) {
     const fundManagerTest = async (expectedFundManagerCut = 15, self) => {
       // deposit
       await smartFundETH.deposit({ from: userOne, value: 100 })
-      // send BAT to kyber
+      // send xxx to exchange
       await xxxERC.transfer(exchangePortal.address, 200, { from: userOne })
 
-      // Trade 100 ether for 100 bat
+      // Trade 100 ether for 100 xxx
       await smartFundETH.trade(ETH_TOKEN_ADDRESS, 100, xxxERC.address, 0, [], "0x", {
         from: userOne,
       })
 
-      // increase price of bat. Ratio of 1/2 means 1 eth = 1/2 bat
+      // increase price of xxx. Ratio of 1/2 means 1 eth = 1/2 xxx
       await exchangePortal.setRatio(1, 2)
 
       // check profit and cuts are corrects
