@@ -411,11 +411,10 @@ contract('SmartFundETH', function([userOne, userTwo, userThree]) {
       await deployContracts(1000, 0)
       const fee = await smartFundETH.successFee()
       assert.equal(fee, 1000)
-      assert.equal(toWei(String(1)), Math.pow(10, 18))
+
+
       // give exchange portal contract some money
       await xxxERC.transfer(exchangePortal.address, toWei(String(10)))
-
-      const user1StartXXX = await xxxERC.balanceOf(userOne)
 
       // deposit in fund
       await smartFundETH.deposit({ from: userOne, value: toWei(String(1)) })

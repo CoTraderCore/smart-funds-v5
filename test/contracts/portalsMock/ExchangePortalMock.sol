@@ -69,7 +69,8 @@ contract ExchangePortalMock {
     // ETH case (can change rate)
     if (_to == address(ETH_TOKEN_ADDRESS)) {
       return _amount.mul(div).div(mul);
-    } else if (_from == address(ETH_TOKEN_ADDRESS)) {
+    }
+    else if (_from == address(ETH_TOKEN_ADDRESS)) {
       return _amount.mul(mul).div(div);
     }
     // DAI Case (can change rate)
@@ -77,7 +78,7 @@ contract ExchangePortalMock {
       return _amount.mul(div).div(mul);
     }
     else if(_from == stableCoinAddress) {
-      return _amount.mul(div).div(mul);
+      return _amount.mul(mul).div(div);
     }
     // ERC case
     else {

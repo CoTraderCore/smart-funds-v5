@@ -450,5 +450,127 @@ contract('SmartFundUSD', function([userOne, userTwo, userThree]) {
       assert.equal(fundManagerTotalCut, 20)
     })
   })
+
+  describe('Fund Manager profit cut with deposit/withdraw scenarios', function() {
+    it('should accurately calculate shares when the manager makes a profit', async function() {
+      // deploy smartFund with 10% success fee
+      await deployContracts(1000, 0)
+      const fee = await smartFundUSD.successFee()
+      assert.equal(fee, 1000)
+
+      // give exchange portal contract some money
+      await xxxERC.transfer(exchangePortal.address, toWei(String(10)))
+
+      // deposit in fund
+      await DAI.approve(smartFundUSD.address, toWei(String(1)), { from: userOne })
+      await smartFundUSD.deposit(toWei(String(1)), { from: userOne })
+
+      await smartFundUSD.trade(
+        DAI.address,
+        toWei(String(1)),
+        xxxERC.address,
+        0,
+        [],
+        "0x",
+        {
+          from: userOne,
+        }
+      )
+
+      // 1 token is now worth 2 ether, the fund managers cut is now 0.1 ether
+      await exchangePortal.setRatio(1, 2)
+
+      // send some DAI to user2
+      DAI.transfer(userTwo, toWei(String(1)))
+      // deposit from user 2
+      await DAI.approve(smartFundUSD.address, toWei(String(1)), { from: userTwo })
+      await smartFundUSD.deposit(toWei(String(1)), { from: userTwo })
+
+      await exchangePortal.setRatio(1, 2)
+
+      await smartFundUSD.trade(
+        DAI.address,
+        toWei(String(1)),
+        xxxERC.address,
+        0,
+        [],
+        "0x",
+        {
+          from: userOne,
+        }
+      )
+
+      await smartFundUSD.fundManagerWithdraw()
+
+      await smartFundUSD.withdraw(0, { from: userTwo })
+
+      const xxxUserTwo = await xxxERC.balanceOf(userTwo)
+
+      assert.equal(fromWei(xxxUserTwo), 0.5)
+    })
+
+    // it('should accurately calculate shares when FM makes a loss then breaks even', async function() {
+    //   // deploy smartFund with 10% success fee
+    //   await deployContracts(1000, 0)
+    //   // give exchange portal contract some money
+    //   await xxxERC.transfer(exchangePortal.address, toWei(String(10)))
+    //   await exchangePortal.pay({ from: userThree, value: toWei(String(3))})
+    //   await DAI.transfer(exchangePortal.address, toWei(String(10)))
+    //   // deposit in fund
+    //   // send some DAI to user2
+    //   DAI.transfer(userTwo, toWei(String(100)))
+    //   await DAI.approve(smartFundUSD.address, toWei(String(1)), { from: userTwo })
+    //   await smartFundUSD.deposit(toWei(String(1)), { from: userTwo })
+    //
+    //   await smartFundUSD.trade(
+    //     DAI.address,
+    //     toWei(String(1)),
+    //     xxxERC.address,
+    //     0,
+    //     [],
+    //     "0x",
+    //     {
+    //       from: userOne,
+    //     }
+    //   )
+    //
+    //   // 1 token is now worth 1/2 ether, the fund lost half its value
+    //   await exchangePortal.setRatio(2, 1)
+    //
+    //   // send some DAI to user3
+    //   DAI.transfer(userThree, toWei(String(100)))
+    //   // user3 deposits, should have 2/3 of shares now
+    //   await DAI.approve(smartFundUSD.address, toWei(String(1)), { from: userThree })
+    //   await smartFundUSD.deposit(toWei(String(1)), { from: userThree })
+    //
+    //   assert.equal(await smartFundUSD.addressToShares.call(userTwo), toWei(String(1)))
+    //   assert.equal(await smartFundUSD.addressToShares.call(userThree), toWei(String(2)))
+    //
+    //   // 1 token is now worth 2 ether, funds value is 3 ether
+    //   await exchangePortal.setRatio(1, 2)
+    //
+    //   await smartFundUSD.trade(
+    //     xxxERC.address,
+    //     toWei(String(1)),
+    //     DAI.address,
+    //     0,
+    //     [],
+    //     "0x",
+    //     {
+    //       from: userOne,
+    //     }
+    //   )
+    //
+    //   assert.equal(
+    //     await web3.eth.getBalance(smartFundUSD.address),
+    //     toWei(String(3))
+    //   )
+    //
+    //   assert.equal(await smartFundUSD.calculateAddressProfit(userTwo), 0)
+    //   assert.equal(await smartFundUSD.calculateAddressProfit(userThree), toWei(String(1)))
+    // })
+  })
+
+
   // END
 })
