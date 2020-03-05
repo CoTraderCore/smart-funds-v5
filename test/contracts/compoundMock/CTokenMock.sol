@@ -29,15 +29,24 @@ contract CTokenMock is StandardToken, DetailedERC20 {
 
     return mintAmount;
   }
+
   function redeem(uint redeemTokens) external returns (uint){
-    require(ERC20(address(this)).transferFrom(msg.sender, address(this), redeemTokens));
+    _burn(msg.sender, redeemTokens);
     ERC20(underlying).transfer(msg.sender, redeemTokens);
   }
+
   function redeemUnderlying(uint redeemAmount) external returns (uint){
-    require(ERC20(address(this)).transferFrom(msg.sender, address(this), redeemAmount));
+    _burn(msg.sender, redeemAmount);
     ERC20(underlying).transfer(msg.sender, redeemAmount);
   }
+
   function balanceOfUnderlying(address account) external view returns (uint){
     return ERC20(address(this)).balanceOf(account);
+  }
+
+  function _burn(address _who, uint256 _value) private {
+    require(_value <= balances[_who]);
+    balances[_who] = balances[_who].sub(_value);
+    totalSupply_ = totalSupply_.sub(_value);
   }
 }
