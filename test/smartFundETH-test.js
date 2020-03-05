@@ -598,6 +598,66 @@ contract('SmartFundETH', function([userOne, userTwo, userThree]) {
 
       assert.equal(await cToken.balanceOf(smartFundETH.address), toWei(String(1)))
     })
+
+
+    it('Calculate fund value and withdraw with Compound assests', async function() {
+      // send some DAI to exchnage portal
+      DAI.transfer(exchangePortal.address, toWei(String(2)))
+
+      // deposit in fund
+      await smartFundETH.deposit({ from: userOne, value: toWei(String(4)) })
+
+      // mint 1 cEth
+      await smartFundETH.compoundMint(toWei(String(1)), cEther.address)
+      // get 1 DAI from exchange portal
+      await smartFundETH.trade(
+        ETH_TOKEN_ADDRESS,
+        toWei(String(2)),
+        DAI.address,
+        0,
+        [],
+        "0x",
+        {
+          from: userOne,
+        }
+      )
+      //
+      // mint 1 DAI Ctoken
+      await smartFundETH.compoundMint(toWei(String(1)), cToken.address)
+
+      // check asset allocation in fund
+      assert.equal(await cEther.balanceOf(smartFundETH.address), toWei(String(1)))
+      assert.equal(await DAI.balanceOf(smartFundETH.address), toWei(String(1)))
+      assert.equal(await cToken.balanceOf(smartFundETH.address), toWei(String(1)))
+      assert.equal(await web3.eth.getBalance(smartFundETH.address), toWei(String(1)))
+
+      // Assume all assets have a 1 to 1 ratio
+      // so in total should be still 4 ETH
+      assert.equal(await smartFundETH.calculateFundValue(), toWei(String(4)))
+
+      const ownerETHBalanceBefore = await web3.eth.getBalance(userOne)
+      const ownerDAIBalanceBefore = await DAI.balanceOf(userOne)
+
+      // withdarw
+      await smartFundETH.withdraw(0)
+
+      // check asset allocation in fund after withdraw
+      assert.equal(await cEther.balanceOf(smartFundETH.address), 0)
+      assert.equal(await DAI.balanceOf(smartFundETH.address), 0)
+      assert.equal(await cToken.balanceOf(smartFundETH.address), 0)
+      assert.equal(await web3.eth.getBalance(smartFundETH.address), 0)
+
+      // check fund value
+      assert.equal(await smartFundETH.calculateFundValue(), 0)
+
+      // owner should get CTokens and DAI
+      assert.equal(await cEther.balanceOf(userOne), toWei(String(1)))
+      assert.equal(await cToken.balanceOf(userOne), toWei(String(1)))
+
+      // owner get DAI and ETH
+      assert.isTrue(await DAI.balanceOf(userOne) > ownerDAIBalanceBefore)
+      assert.isTrue(await web3.eth.getBalance(userOne) > ownerETHBalanceBefore)
+    })
   })
   //END
 })
