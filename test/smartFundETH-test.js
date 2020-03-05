@@ -597,6 +597,13 @@ contract('SmartFundETH', function([userOne, userTwo, userThree]) {
       await smartFundETH.compoundMint(toWei(String(1)), cToken.address)
 
       assert.equal(await cToken.balanceOf(smartFundETH.address), toWei(String(1)))
+
+      // reedem
+      await smartFundETH.compoundRedeemByPercent(100, cToken.address)
+
+      // check balance
+      assert.equal(await DAI.balanceOf(smartFundETH.address), toWei(String(1)))
+      assert.equal(await cToken.balanceOf(smartFundETH.address), 0)
     })
 
 
@@ -657,6 +664,48 @@ contract('SmartFundETH', function([userOne, userTwo, userThree]) {
       // owner get DAI and ETH
       assert.isTrue(await DAI.balanceOf(userOne) > ownerDAIBalanceBefore)
       assert.isTrue(await web3.eth.getBalance(userOne) > ownerETHBalanceBefore)
+    })
+
+    it('manager can not redeemUnderlying not correct percent', async function() {
+      // deposit in fund
+      await smartFundETH.deposit({ from: userOne, value: toWei(String(1)) })
+      // mint
+      await smartFundETH.compoundMint(toWei(String(1)), cEther.address)
+
+      // reedem with 101%
+      await smartFundETH.compoundRedeemByPercent(101, cEther.address)
+      .should.be.rejectedWith(EVMRevert)
+
+      // reedem with 0%
+      await smartFundETH.compoundRedeemByPercent(0, cEther.address)
+      .should.be.rejectedWith(EVMRevert)
+
+      // reedem with 100%
+      await smartFundETH.compoundRedeemByPercent(100, cEther.address)
+      .should.be.fulfilled
+    })
+
+
+    it('manager can redeemUnderlying different percent', async function() {
+      // deposit in fund
+      await smartFundETH.deposit({ from: userOne, value: toWei(String(1)) })
+      // mint
+      await smartFundETH.compoundMint(toWei(String(1)), cEther.address)
+
+      // reedem with 50%
+      await smartFundETH.compoundRedeemByPercent(50, cEther.address)
+      .should.be.fulfilled
+      assert.equal(await cEther.balanceOf(smartFundETH.address), toWei(String(0.5)))
+
+      // reedem with 25%
+      await smartFundETH.compoundRedeemByPercent(25, cEther.address)
+      .should.be.fulfilled
+      assert.equal(await cEther.balanceOf(smartFundETH.address), toWei(String(0.375)))
+
+      // reedem with all remains
+      await smartFundETH.compoundRedeemByPercent(100, cEther.address)
+      .should.be.fulfilled
+      assert.equal(await cEther.balanceOf(smartFundETH.address), toWei(String(0)))
     })
   })
   //END

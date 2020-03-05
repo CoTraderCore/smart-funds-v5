@@ -133,7 +133,7 @@ contract SmartFundAdvanced is SmartFundCore {
     }
     else{
       // not correct percent
-      return 0;
+      revert();
     }
   }
 
