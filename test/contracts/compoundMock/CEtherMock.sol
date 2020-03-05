@@ -12,6 +12,7 @@ contract CEtherMock is StandardToken, DetailedERC20 {
     // Initialize totalSupply
     totalSupply_ = _totalSupply;
     // Initialize Holder
+    // This contract is owner of all cEthers
     balances[address(this)] = _totalSupply;
   }
 
@@ -28,5 +29,8 @@ contract CEtherMock is StandardToken, DetailedERC20 {
   function redeemUnderlying(uint redeemAmount) external returns (uint){
     require(ERC20(address(this)).transferFrom(msg.sender, address(this), redeemAmount));
     msg.sender.transfer(redeemAmount);
+  }
+  function balanceOfUnderlying(address account) external view returns (uint){
+    return ERC20(address(this)).balanceOf(account);
   }
 }

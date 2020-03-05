@@ -5,28 +5,39 @@ import "../../../contracts/zeppelin-solidity/contracts/token/ERC20/DetailedERC20
 import "../../../contracts/zeppelin-solidity/contracts/token/ERC20/ERC20.sol";
 
 contract CTokenMock is StandardToken, DetailedERC20 {
-  constructor(string _name, string _symbol, uint8 _decimals, uint256 _totalSupply)
+  address public underlying;
+
+  constructor(string _name, string _symbol, uint8 _decimals, uint256 _totalSupply, address _underlying)
     DetailedERC20(_name, _symbol, _decimals)
     public
   {
     // Initialize totalSupply
     totalSupply_ = _totalSupply;
     // Initialize Holder
+    // This contract is owner of all cTokens
     balances[address(this)] = _totalSupply;
+
+    // Initial ERC underlying
+    underlying = _underlying;
   }
 
-  function mint(uint mintAmount) external {
-    require(ERC20(address(this)).transferFrom(msg.sender, address(this), mintAmount));
+  function mint(uint mintAmount) external returns (uint) {
+    require(ERC20(underlying).transferFrom(msg.sender, address(this), mintAmount));
     // transfer cToken
     // for mock 1 cToken = 1 erc token
     ERC20(address(this)).transfer(msg.sender, mintAmount);
+
+    return mintAmount;
   }
   function redeem(uint redeemTokens) external returns (uint){
     require(ERC20(address(this)).transferFrom(msg.sender, address(this), redeemTokens));
-    msg.sender.transfer(redeemTokens);
+    ERC20(underlying).transfer(msg.sender, redeemTokens);
   }
   function redeemUnderlying(uint redeemAmount) external returns (uint){
     require(ERC20(address(this)).transferFrom(msg.sender, address(this), redeemAmount));
-    msg.sender.transfer(redeemAmount);
+    ERC20(underlying).transfer(msg.sender, redeemAmount);
+  }
+  function balanceOfUnderlying(address account) external view returns (uint){
+    return ERC20(address(this)).balanceOf(account);
   }
 }
