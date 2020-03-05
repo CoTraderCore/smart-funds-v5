@@ -4,7 +4,7 @@ import "../../../contracts/zeppelin-solidity/contracts/math/SafeMath.sol";
 import "../../../contracts/zeppelin-solidity/contracts/token/ERC20/ERC20.sol";
 
 contract PoolPortalMock {
-
+/* 
   using SafeMath for uint256;
 
   address public DAI;
@@ -35,7 +35,7 @@ contract PoolPortalMock {
      uint256 relayAmount = _amount.div(2);
 
      require(ERC20(DAI).transferFrom(msg.sender, address(this), relayAmount));
-     require(ERC20(DAI).transferFrom(msg.sender, address(this), relayAmount))
+     require(ERC20(DAI).transferFrom(msg.sender, address(this), relayAmount));
 
      ERC20(DAIBNTPoolToken).transfer(msg.sender, _amount);
   }
@@ -98,5 +98,5 @@ contract PoolPortalMock {
 
   function pay() public payable {}
 
-  function() public payable {}
+  function() public payable {} */
 }

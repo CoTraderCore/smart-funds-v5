@@ -15,7 +15,10 @@ require('chai')
 const SmartFundUSD = artifacts.require('./core/funds/SmartFundUSD.sol')
 const Token = artifacts.require('./tokens/Token')
 const ExchangePortalMock = artifacts.require('./portalsMock/ExchangePortalMock')
-let ETH_TOKEN_ADDRESS, xxxERC, DAI, exchangePortal, smartFundUSD
+const CToken = artifacts.require('./compoundMock/CTokenMock')
+const CEther = artifacts.require('./compoundMock/CEtherMock')
+
+let ETH_TOKEN_ADDRESS, xxxERC, DAI, exchangePortal, smartFundUSD, cToken, cEther
 
 contract('SmartFundUSD', function([userOne, userTwo, userThree]) {
   async function deployContracts(successFee=1000, platformFee=0){
@@ -37,6 +40,21 @@ contract('SmartFundUSD', function([userOne, userTwo, userThree]) {
       "1000000000000000000000000"
     )
 
+    cToken = await CToken.new(
+      "Compound DAI",
+      "CDAI",
+      18,
+      toWei(String(100000000)),
+      DAI.address
+    )
+
+    cEther = await CEther.new(
+      "Compound Ether",
+      "CETH",
+      18,
+      toWei(String(100000000))
+    )
+
     // Deploy exchangePortal
     exchangePortal = await ExchangePortalMock.new(1, 1, DAI.address)
 
@@ -54,7 +72,7 @@ contract('SmartFundUSD', function([userOne, userTwo, userThree]) {
       '0x0000000000000000000000000000000000000000', // address _permittedStabels
       '0x0000000000000000000000000000000000000000', // address _poolPortalAddress,
       DAI.address,                                  // address_stableCoinAddress
-      '0x0000000000000000000000000000000000000000'  // address _cEther
+      cEther.address                                // address _cEther
     )
   }
 
@@ -78,16 +96,35 @@ contract('SmartFundUSD', function([userOne, userTwo, userThree]) {
       assert.equal(totalSupply, "1000000000000000000000000")
     })
 
+    it('Correct init cToken token', async function() {
+      const name = await cToken.name()
+      const totalSupply = await cToken.totalSupply()
+      const underlying = await cToken.underlying()
+
+      assert.equal(underlying, DAI.address)
+      assert.equal(name, "Compound DAI")
+      assert.equal(totalSupply, toWei(String(100000000)))
+    })
+
+    it('Correct init cEther token', async function() {
+      const name = await cEther.name()
+      const totalSupply = await cEther.totalSupply()
+      assert.equal(name, "Compound Ether")
+      assert.equal(totalSupply, toWei(String(100000000)))
+    })
+
     it('Correct init usd smart fund', async function() {
       const name = await smartFundUSD.name()
       const totalShares = await smartFundUSD.totalShares()
       const portal = await smartFundUSD.exchangePortal()
       const stableCoinAddress = await smartFundUSD.stableCoinAddress()
+      const cEthAddress = await smartFundUSD.cEther()
 
       assert.equal(stableCoinAddress, DAI.address)
       assert.equal(exchangePortal.address, portal)
       assert.equal('TEST USD FUND', name)
       assert.equal(0, totalShares)
+      assert.equal(cEthAddress, cEther.address)
     })
   })
 
@@ -571,6 +608,172 @@ contract('SmartFundUSD', function([userOne, userTwo, userThree]) {
     })
   })
 
+  describe('COMPOUND', function() {
+    it('Fund Manager can mint and reedem CEther', async function() {
+      assert.equal(await cEther.balanceOf(smartFundUSD.address), 0)
+
+      // send some ETH to exchnage portal
+      await exchangePortal.pay({ from: userOne, value: toWei(String(1))})
+
+      // deposit in fund
+      await DAI.approve(smartFundUSD.address, toWei(String(1)), { from: userOne })
+      await smartFundUSD.deposit(toWei(String(1)), { from: userOne })
+
+      // change DAI to ETH
+      await smartFundUSD.trade(
+        DAI.address,
+        toWei(String(1)),
+        ETH_TOKEN_ADDRESS,
+        0,
+        [],
+        "0x",
+        {
+          from: userOne,
+        }
+      )
+
+      // mint
+      await smartFundUSD.compoundMint(toWei(String(1)), cEther.address)
+
+      // check balance
+      assert.equal(await web3.eth.getBalance(smartFundUSD.address), 0)
+      assert.equal(await cEther.balanceOf(smartFundUSD.address), toWei(String(1)))
+
+      // reedem
+      await smartFundUSD.compoundRedeemByPercent(100, cEther.address)
+
+      // check balance
+      assert.equal(await web3.eth.getBalance(smartFundUSD.address), toWei(String(1)))
+      assert.equal(await cEther.balanceOf(smartFundUSD.address), 0)
+    })
+
+    it('Fund Manager can mint and reedem cToken', async function() {
+      assert.equal(await cToken.balanceOf(smartFundUSD.address), 0)
+
+      // deposit in fund
+      await DAI.approve(smartFundUSD.address, toWei(String(1)), { from: userOne })
+      await smartFundUSD.deposit(toWei(String(1)), { from: userOne })
+
+      // mint DAI Ctoken
+      await smartFundUSD.compoundMint(toWei(String(1)), cToken.address)
+
+      assert.equal(await cToken.balanceOf(smartFundUSD.address), toWei(String(1)))
+
+      // reedem
+      await smartFundUSD.compoundRedeemByPercent(100, cToken.address)
+
+      // check balance
+      assert.equal(await DAI.balanceOf(smartFundUSD.address), toWei(String(1)))
+      assert.equal(await cToken.balanceOf(smartFundUSD.address), 0)
+    })
+
+
+    it('Calculate fund value and withdraw with Compound assests', async function() {
+      // send some ETH to exchnage portal
+      await exchangePortal.pay({ from: userOne, value: toWei(String(2))})
+
+      // deposit in fund
+      await DAI.approve(smartFundUSD.address, toWei(String(4)), { from: userOne })
+      await smartFundUSD.deposit(toWei(String(4)), { from: userOne })
+
+
+      // get 1 DAI from exchange portal
+      await smartFundUSD.trade(
+        DAI.address,
+        toWei(String(2)),
+        ETH_TOKEN_ADDRESS,
+        0,
+        [],
+        "0x",
+        {
+          from: userOne,
+        }
+      )
+      // mint 1 cEth
+      await smartFundUSD.compoundMint(toWei(String(1)), cEther.address)
+
+      // mint 1 DAI Ctoken
+      await smartFundUSD.compoundMint(toWei(String(1)), cToken.address)
+
+      // check asset allocation in fund
+      assert.equal(await cEther.balanceOf(smartFundUSD.address), toWei(String(1)))
+      assert.equal(await DAI.balanceOf(smartFundUSD.address), toWei(String(1)))
+      assert.equal(await cToken.balanceOf(smartFundUSD.address), toWei(String(1)))
+      assert.equal(await web3.eth.getBalance(smartFundUSD.address), toWei(String(1)))
+
+      // Assume all assets have a 1 to 1 ratio
+      // so in total should be still 4 ETH
+      assert.equal(await smartFundUSD.calculateFundValue(), toWei(String(4)))
+
+      const ownerETHBalanceBefore = await web3.eth.getBalance(userOne)
+      const ownerDAIBalanceBefore = await DAI.balanceOf(userOne)
+
+      // withdarw
+      await smartFundUSD.withdraw(0)
+
+      // check asset allocation in fund after withdraw
+      assert.equal(await cEther.balanceOf(smartFundUSD.address), 0)
+      assert.equal(await DAI.balanceOf(smartFundUSD.address), 0)
+      assert.equal(await cToken.balanceOf(smartFundUSD.address), 0)
+      assert.equal(await web3.eth.getBalance(smartFundUSD.address), 0)
+
+      // check fund value
+      assert.equal(await smartFundUSD.calculateFundValue(), 0)
+
+      // owner should get CTokens and DAI
+      assert.equal(await cEther.balanceOf(userOne), toWei(String(1)))
+      assert.equal(await cToken.balanceOf(userOne), toWei(String(1)))
+
+      // owner get DAI and ETH
+      assert.isTrue(await DAI.balanceOf(userOne) > ownerDAIBalanceBefore)
+      assert.isTrue(await web3.eth.getBalance(userOne) > ownerETHBalanceBefore)
+    })
+
+    it('manager can not redeemUnderlying not correct percent', async function() {
+      // deposit in fund
+      await DAI.approve(smartFundUSD.address, toWei(String(1)), { from: userOne })
+      await smartFundUSD.deposit(toWei(String(1)), { from: userOne })
+      // mint
+      await smartFundUSD.compoundMint(toWei(String(1)), cToken.address)
+
+      // reedem with 101%
+      await smartFundUSD.compoundRedeemByPercent(101, cToken.address)
+      .should.be.rejectedWith(EVMRevert)
+
+      // reedem with 0%
+      await smartFundUSD.compoundRedeemByPercent(0, cToken.address)
+      .should.be.rejectedWith(EVMRevert)
+
+      // reedem with 100%
+      await smartFundUSD.compoundRedeemByPercent(100, cToken.address)
+      .should.be.fulfilled
+    })
+
+
+    it('manager can redeemUnderlying different percent', async function() {
+      // deposit in fund
+      await DAI.approve(smartFundUSD.address, toWei(String(1)), { from: userOne })
+      await smartFundUSD.deposit(toWei(String(1)), { from: userOne })
+
+      // mint
+      await smartFundUSD.compoundMint(toWei(String(1)), cToken.address)
+
+      // reedem with 50%
+      await smartFundUSD.compoundRedeemByPercent(50, cToken.address)
+      .should.be.fulfilled
+      assert.equal(await cToken.balanceOf(smartFundUSD.address), toWei(String(0.5)))
+
+      // reedem with 25%
+      await smartFundUSD.compoundRedeemByPercent(25, cToken.address)
+      .should.be.fulfilled
+      assert.equal(await cToken.balanceOf(smartFundUSD.address), toWei(String(0.375)))
+
+      // reedem with all remains
+      await smartFundUSD.compoundRedeemByPercent(100, cToken.address)
+      .should.be.fulfilled
+      assert.equal(await cToken.balanceOf(smartFundUSD.address), toWei(String(0)))
+    })
+  })
 
   // END
 })
