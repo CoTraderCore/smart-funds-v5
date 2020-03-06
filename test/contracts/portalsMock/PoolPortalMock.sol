@@ -1,10 +1,11 @@
+// This contract sell/buy UNI and BNT Pool relays for DAI mock token
 pragma solidity ^0.4.24;
 
 import "../../../contracts/zeppelin-solidity/contracts/math/SafeMath.sol";
 import "../../../contracts/zeppelin-solidity/contracts/token/ERC20/ERC20.sol";
 
 contract PoolPortalMock {
-/* 
+
   using SafeMath for uint256;
 
   address public DAI;
@@ -21,16 +22,17 @@ contract PoolPortalMock {
   constructor(
     address _BNT,
     address _DAI,
-    address DAIBNTPoolToken,
+    address _DAIBNTPoolToken,
     address _DAIUNIPoolToken)
     public
   {
     DAI = _DAI;
     BNT = _BNT;
-    DAIBNTPoolToken = _BNTPoolToken;
-    DAIUNIPoolToken = _UNIPoolToken;
+    DAIBNTPoolToken = _DAIBNTPoolToken;
+    DAIUNIPoolToken = _DAIUNIPoolToken;
   }
 
+  // for mock 1 Relay BNT = 0.5 BNT and 0.5 ERC
   function buyBancorPool(ERC20 _poolToken, uint256 _amount) private {
      uint256 relayAmount = _amount.div(2);
 
@@ -40,9 +42,10 @@ contract PoolPortalMock {
      ERC20(DAIBNTPoolToken).transfer(msg.sender, _amount);
   }
 
+  // for mock 1 UNI = 0.5 ETH and 0.5 ERC
   function buyUniswapPool(address _poolToken, uint256 _ethAmount){
     require(ERC20(DAI).transferFrom(msg.sender, address(this), _ethAmount));
-    ERC20(DAIUNIPoolToken).transfer(msg.sender, _amount.mul(2));
+    ERC20(DAIUNIPoolToken).transfer(msg.sender, _ethAmount.mul(2));
   }
 
   function buyPool
@@ -89,14 +92,24 @@ contract PoolPortalMock {
   }
 
   function sellPoolViaBancor(ERC20 _poolToken, uint256 _amount) private {
+    // get BNT pool relay back
+    require(ERC20(DAIBNTPoolToken).transferFrom(msg.sender, address(this), _amount));
 
+    // send back connectors
+    require(ERC20(DAI).transfer(msg.sender, _amount.div(2)));
+    require(ERC20(BNT).transfer(msg.sender, _amount.div(2)));
   }
 
   function sellPoolViaUniswap(ERC20 _poolToken, uint256 _amount) private {
+    // get UNI pool back
+    require(ERC20(DAIUNIPoolToken).transferFrom(msg.sender, address(this), _amount));
 
+    // send back connectors
+    require(ERC20(DAI).transfer(msg.sender, _amount.div(2)));
+    address(msg.sender).transfer(_amount.div(2));
   }
 
   function pay() public payable {}
 
-  function() public payable {} */
+  function() public payable {}
 }
