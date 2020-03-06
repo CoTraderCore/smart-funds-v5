@@ -117,7 +117,6 @@ contract PoolPortalMock {
       sellPoolViaBancor(_poolToken, _amount);
     }
     else if (_type == uint(PortalType.Uniswap)){
-      require(msg.value == _amount);
       sellPoolViaUniswap(_poolToken, _amount);
     }
     else{

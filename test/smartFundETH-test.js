@@ -858,6 +858,17 @@ contract('SmartFundETH', function([userOne, userTwo, userThree]) {
       // Check balance after buy pool
       assert.equal(await DAI.balanceOf(smartFundETH.address), toWei(String(0)))
       assert.equal(await DAIUNI.balanceOf(smartFundETH.address), toWei(String(2)))
+      const fundETHBalanceAfterBuy = await web3.eth.getBalance(smartFundETH.address)
+
+      // Sell UNI Pool
+      await smartFundETH.sellPool(toWei(String(2)), 1, DAIUNI.address)
+
+      // Check balance after buy pool
+      const fundETHBalanceAfterSell = await web3.eth.getBalance(smartFundETH.address)
+      assert.equal(await DAI.balanceOf(smartFundETH.address), toWei(String(1)))
+      assert.equal(await DAIUNI.balanceOf(smartFundETH.address), toWei(String(0)))
+
+      assert.isTrue(fundETHBalanceAfterSell > fundETHBalanceAfterBuy)
     })
   })
   //END
