@@ -32,6 +32,7 @@ contract PoolPortalMock {
     DAIUNIPoolToken = _DAIUNIPoolToken;
   }
 
+
   // for mock 1 Relay BNT = 0.5 BNT and 0.5 ERC
   function buyBancorPool(ERC20 _poolToken, uint256 _amount) private {
      uint256 relayAmount = _amount.div(2);
@@ -47,6 +48,7 @@ contract PoolPortalMock {
     require(ERC20(DAI).transferFrom(msg.sender, address(this), _ethAmount));
     ERC20(DAIUNIPoolToken).transfer(msg.sender, _ethAmount.mul(2));
   }
+
 
   function buyPool
   (
@@ -82,6 +84,26 @@ contract PoolPortalMock {
     ERCConnector = ERC20(DAI);
   }
 
+  function getUniswapConnectorsAmountByPoolAmount(
+    uint256 _amount,
+    address _exchange
+  )
+  public
+  view
+  returns(uint256 ethAmount, uint256 ercAmount){
+    ethAmount = _amount.div(2);
+    ercAmount = _amount.div(2);
+  }
+
+
+  function getTokenByUniswapExchange(address _exchange)
+  public
+  view
+  returns(address){
+    return DAI;
+  }
+
+
   function sellPool
   (
     uint256 _amount,
@@ -95,6 +117,7 @@ contract PoolPortalMock {
       sellPoolViaBancor(_poolToken, _amount);
     }
     else if (_type == uint(PortalType.Uniswap)){
+      require(msg.value == _amount);
       sellPoolViaUniswap(_poolToken, _amount);
     }
     else{
@@ -102,6 +125,7 @@ contract PoolPortalMock {
       revert();
     }
   }
+
 
   function sellPoolViaBancor(ERC20 _poolToken, uint256 _amount) private {
     // get BNT pool relay back
@@ -120,6 +144,7 @@ contract PoolPortalMock {
     require(ERC20(DAI).transfer(msg.sender, _amount.div(2)));
     address(msg.sender).transfer(_amount.div(2));
   }
+
 
   function pay() public payable {}
 

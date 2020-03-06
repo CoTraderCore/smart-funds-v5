@@ -777,8 +777,6 @@ contract('SmartFundETH', function([userOne, userTwo, userThree]) {
       // send some assets to portals
       await BNT.transfer(exchangePortal.address, toWei(String(4)))
       await DAI.transfer(exchangePortal.address, toWei(String(4)))
-      await poolPortal.pay({ from: userThree, value: toWei(String(4)) })
-      await poolPortal.pay({ from: userThree, value: toWei(String(4)) })
 
       await smartFundETH.deposit({ from: userOne, value: toWei(String(2)) })
 
@@ -819,6 +817,47 @@ contract('SmartFundETH', function([userOne, userTwo, userThree]) {
       assert.equal(await BNT.balanceOf(smartFundETH.address), 0)
       assert.equal(await DAI.balanceOf(smartFundETH.address), 0)
       assert.equal(await DAIBNT.balanceOf(smartFundETH.address), toWei(String(2)))
+
+      // sell pool
+      await smartFundETH.sellPool(toWei(String(2)), 0, DAIBNT.address)
+
+      // Check balance after sell pool
+      assert.equal(await BNT.balanceOf(smartFundETH.address), toWei(String(1)))
+      assert.equal(await DAI.balanceOf(smartFundETH.address), toWei(String(1)))
+      assert.equal(await DAIBNT.balanceOf(smartFundETH.address), 0)
+
+    })
+
+    it('should be able buy/sell Uniswap pool', async function() {
+      // send some assets to portals
+      await DAI.transfer(exchangePortal.address, toWei(String(4)))
+      await poolPortal.pay({ from: userThree, value: toWei(String(4)) })
+
+      await smartFundETH.deposit({ from: userOne, value: toWei(String(2)) })
+
+      // get 1 DAI from exchange portal
+      await smartFundETH.trade(
+        ETH_TOKEN_ADDRESS,
+        toWei(String(1)),
+        DAI.address,
+        0,
+        [],
+        "0x",
+        {
+          from: userOne,
+        }
+      )
+
+      // Check balance before buy pool
+      assert.equal(await DAI.balanceOf(smartFundETH.address), toWei(String(1)))
+      assert.equal(await DAIUNI.balanceOf(smartFundETH.address), 0)
+
+      // Sell UNI Pool
+      await smartFundETH.buyPool(toWei(String(1)), 1, DAIUNI.address)
+
+      // Check balance after buy pool
+      assert.equal(await DAI.balanceOf(smartFundETH.address), toWei(String(0)))
+      assert.equal(await DAIUNI.balanceOf(smartFundETH.address), toWei(String(2)))
     })
   })
   //END
