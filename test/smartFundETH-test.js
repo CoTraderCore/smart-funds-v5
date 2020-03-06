@@ -774,9 +774,9 @@ contract('SmartFundETH', function([userOne, userTwo, userThree]) {
 
   describe('UNISWAP and BANCOR pools', function() {
     it('should be able buy/sell Bancor pool', async function() {
-      // send some assets to portals
-      await BNT.transfer(exchangePortal.address, toWei(String(4)))
-      await DAI.transfer(exchangePortal.address, toWei(String(4)))
+      // send some assets to pool portal
+      await BNT.transfer(exchangePortal.address, toWei(String(1)))
+      await DAI.transfer(exchangePortal.address, toWei(String(1)))
 
       await smartFundETH.deposit({ from: userOne, value: toWei(String(2)) })
 
@@ -829,9 +829,8 @@ contract('SmartFundETH', function([userOne, userTwo, userThree]) {
     })
 
     it('should be able buy/sell Uniswap pool', async function() {
-      // send some assets to portals
-      await DAI.transfer(exchangePortal.address, toWei(String(4)))
-      await poolPortal.pay({ from: userThree, value: toWei(String(4)) })
+      // send some assets to pool portal
+      await DAI.transfer(exchangePortal.address, toWei(String(1)))
 
       await smartFundETH.deposit({ from: userOne, value: toWei(String(2)) })
 
@@ -852,7 +851,7 @@ contract('SmartFundETH', function([userOne, userTwo, userThree]) {
       assert.equal(await DAI.balanceOf(smartFundETH.address), toWei(String(1)))
       assert.equal(await DAIUNI.balanceOf(smartFundETH.address), 0)
 
-      // Sell UNI Pool
+      // Buy UNI Pool
       await smartFundETH.buyPool(toWei(String(1)), 1, DAIUNI.address)
 
       // Check balance after buy pool
@@ -869,6 +868,98 @@ contract('SmartFundETH', function([userOne, userTwo, userThree]) {
       assert.equal(await DAIUNI.balanceOf(smartFundETH.address), toWei(String(0)))
 
       assert.isTrue(fundETHBalanceAfterSell > fundETHBalanceAfterBuy)
+    })
+
+    it('Take into account UNI and BNT pools in fund value', async function() {
+      // send some assets to pool portal
+      await BNT.transfer(exchangePortal.address, toWei(String(1)))
+      await DAI.transfer(exchangePortal.address, toWei(String(2)))
+
+      await smartFundETH.deposit({ from: userOne, value: toWei(String(4)) })
+
+      // get 2 DAI from exchange portal
+      await smartFundETH.trade(
+        ETH_TOKEN_ADDRESS,
+        toWei(String(2)),
+        DAI.address,
+        0,
+        [],
+        "0x",
+        {
+          from: userOne,
+        }
+      )
+
+      // get 1 BNT from exchange portal
+      await smartFundETH.trade(
+        ETH_TOKEN_ADDRESS,
+        toWei(String(1)),
+        BNT.address,
+        0,
+        [],
+        "0x",
+        {
+          from: userOne,
+        }
+      )
+
+      // Buy UNI Pool
+      await smartFundETH.buyPool(toWei(String(1)), 1, DAIUNI.address)
+      // Buy BNT Pool
+      await smartFundETH.buyPool(toWei(String(2)), 0, DAIBNT.address)
+
+      // Fund get UNI and BNT Pools
+      assert.equal(await DAIBNT.balanceOf(smartFundETH.address), toWei(String(2)))
+      assert.equal(await DAIUNI.balanceOf(smartFundETH.address), toWei(String(2)))
+
+      // Assume that asset prices have not changed, and therefore the value of the fund
+      // should be the same as with the first deposit
+      assert.equal(await smartFundETH.calculateFundValue(), toWei(String(4)))
+    })
+
+    it('Investor can withdraw UNI and BNT pools', async function() {
+      // send some assets to pool portal
+      await BNT.transfer(exchangePortal.address, toWei(String(1)))
+      await DAI.transfer(exchangePortal.address, toWei(String(2)))
+
+      await smartFundETH.deposit({ from: userOne, value: toWei(String(4)) })
+
+      // get 2 DAI from exchange portal
+      await smartFundETH.trade(
+        ETH_TOKEN_ADDRESS,
+        toWei(String(2)),
+        DAI.address,
+        0,
+        [],
+        "0x",
+        {
+          from: userOne,
+        }
+      )
+
+      // get 1 BNT from exchange portal
+      await smartFundETH.trade(
+        ETH_TOKEN_ADDRESS,
+        toWei(String(1)),
+        BNT.address,
+        0,
+        [],
+        "0x",
+        {
+          from: userOne,
+        }
+      )
+
+      // Buy UNI Pool
+      await smartFundETH.buyPool(toWei(String(1)), 1, DAIUNI.address)
+      // Buy BNT Pool
+      await smartFundETH.buyPool(toWei(String(2)), 0, DAIBNT.address)
+
+      await smartFundETH.withdraw(0)
+
+      // investor get his BNT and UNI pools
+      assert.equal(await DAIBNT.balanceOf(userOne), toWei(String(2)))
+      assert.equal(await DAIUNI.balanceOf(userOne), toWei(String(2)))
     })
   })
   //END
