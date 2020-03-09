@@ -13,6 +13,9 @@ import "../zeppelin-solidity/contracts/token/ERC20/ERC20.sol";
 contract SmartFundRegistry is Ownable {
   address[] public smartFunds;
 
+  // address of platdorm wallet contract
+  address public COTDAOWallet;
+
   // The Smart Contract which stores the addresses of all the authorized Exchange Portals
   PermittedExchangesInterface public permittedExchanges;
   // The Smart Contract which stores the addresses of all the authorized Pool Portals
@@ -45,6 +48,7 @@ contract SmartFundRegistry is Ownable {
   /**
   * @dev contructor
   *
+  * @param _COTDAOWallet                 address of platform wallet contract
   * @param _platformFee                  Initial platform fee
   * @param _permittedExchangesAddress    Address of the permittedExchanges contract
   * @param _exchangePortalAddress        Address of the initial ExchangePortal contract
@@ -57,6 +61,7 @@ contract SmartFundRegistry is Ownable {
   * @param _cEther                       Address of Compound ETH wrapper
   */
   constructor(
+    address _COTDAOWallet,
     uint256 _platformFee,
     address _permittedExchangesAddress,
     address _exchangePortalAddress,
@@ -68,6 +73,7 @@ contract SmartFundRegistry is Ownable {
     address _smartFundUSDFactory,
     address _cEther
   ) public {
+    COTDAOWallet = _COTDAOWallet;
     platformFee = _platformFee;
     exchangePortalAddress = _exchangePortalAddress;
     permittedExchanges = PermittedExchangesInterface(_permittedExchangesAddress);
@@ -105,7 +111,7 @@ contract SmartFundRegistry is Ownable {
         _name,
         _successFee,
         platformFee,
-        address(this),
+        COTDAOWallet,
         exchangePortalAddress,
         address(permittedExchanges),
         address(permittedPools),
@@ -121,7 +127,7 @@ contract SmartFundRegistry is Ownable {
         _name,
         _successFee,
         platformFee,
-        address(this),
+        COTDAOWallet,
         exchangePortalAddress,
         address(permittedExchanges),
         address(permittedPools),

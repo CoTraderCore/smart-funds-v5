@@ -15,10 +15,11 @@ require('chai')
 const SmartFundETHFactory = artifacts.require('./core/funds/SmartFundETHFactory.sol')
 const SmartFundUSDFactory = artifacts.require('./core/funds/SmartFundUSDFactory.sol')
 const SmartFundRegistry = artifacts.require('./core/SmartFundRegistry.sol')
-
+const CoTraderDAOWalletMock = artifacts.require('./portalsMock/CoTraderDAOWalletMock')
 
 contract('SmartFundRegistry', function([userOne, userTwo, userThree]) {
   beforeEach(async function() {
+    this.COT_DAO_WALLET = await CoTraderDAOWalletMock.new()
     this.ETH_TOKEN_ADDRESS = '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE'
 
     this.smartFundETHFactory = await SmartFundETHFactory.new()
@@ -26,23 +27,27 @@ contract('SmartFundRegistry', function([userOne, userTwo, userThree]) {
 
 
     this.registry = await SmartFundRegistry.new(
-      1000, //   PLATFORM_FEE,
+      this.COT_DAO_WALLET.address,                  //   address of platform wallet
+      1000,                                         //   PLATFORM_FEE,
       '0x0000000000000000000000000000000000000000', //   PermittedExchanges.address,
       '0x0000000000000000000000000000000000000000', //   ExchangePortal.address,
       '0x0000000000000000000000000000000000000000', //   PermittedPools.address,
       '0x0000000000000000000000000000000000000000', //   PoolPortal.address,
       '0x0000000000000000000000000000000000000000', //   PermittedStabels.address,
       '0x0000000000000000000000000000000000000000', //   STABLE_COIN_ADDRESS,
-      this.smartFundETHFactory.address, //   SmartFundETHFactory.address,
-      this.smartFundUSDFactory.address, //   SmartFundUSDFactory.address,
+      this.smartFundETHFactory.address,             //   SmartFundETHFactory.address,
+      this.smartFundUSDFactory.address,             //   SmartFundUSDFactory.address,
       '0x0000000000000000000000000000000000000000', //   COMPOUND_CETHER
     )
   })
 
   describe('INIT registry', function() {
-    it('Correct funds initial amount', async function() {
+    it('Correct initial registry', async function() {
       const totalFunds = await this.registry.totalSmartFunds()
       assert.equal(0, totalFunds)
+
+      const COT_DAO_WALLET = await this.registry.COTDAOWallet()
+      assert.equal(COT_DAO_WALLET, this.COT_DAO_WALLET.address)
     })
   })
 
