@@ -19,7 +19,7 @@ const PoolPortalMock = artifacts.require('./portalsMock/PoolPortalMock')
 const CToken = artifacts.require('./compoundMock/CTokenMock')
 const CEther = artifacts.require('./compoundMock/CEtherMock')
 
-let ETH_TOKEN_ADDRESS, xxxERC, DAI, exchangePortal, smartFundUSD, cToken, cEther, BNT, DAIUNI, DAIBNT, poolPortal
+let ETH_TOKEN_ADDRESS, xxxERC, DAI, exchangePortal, smartFundUSD, cToken, cEther, BNT, DAIUNI, DAIBNT, poolPortal, yyyERC
 
 contract('SmartFundUSD', function([userOne, userTwo, userThree]) {
   async function deployContracts(successFee=1000, platformFee=0){
@@ -31,6 +31,14 @@ contract('SmartFundUSD', function([userOne, userTwo, userThree]) {
       "xxx",
       18,
       "1000000000000000000000000"
+    )
+
+    // Deploy yyy Token
+    yyyERC = await Token.new(
+      "yyyERC20",
+      "yyy",
+      18,
+      toWei(String(100000000))
     )
 
     // Deploy BNT Token
@@ -116,6 +124,13 @@ contract('SmartFundUSD', function([userOne, userTwo, userThree]) {
       const totalSupply = await xxxERC.totalSupply()
       assert.equal(name, "xxxERC20")
       assert.equal(totalSupply, "1000000000000000000000000")
+    })
+
+    it('Correct init yyy token', async function() {
+      const name = await yyyERC.name()
+      const totalSupply = await yyyERC.totalSupply()
+      assert.equal(name, "yyyERC20")
+      assert.equal(totalSupply, toWei(String(100000000)))
     })
 
     it('Correct init DAIBNT token', async function() {
@@ -212,6 +227,99 @@ contract('SmartFundUSD', function([userOne, userTwo, userThree]) {
 
 
   describe('Profit', function() {
+    it('should have zero profit before any deposits have been made', async function() {
+        assert.equal(await smartFundUSD.calculateAddressProfit(userOne), 0)
+        assert.equal(await smartFundUSD.calculateFundProfit(), 0)
+    })
+
+    it('should have zero profit before any trades have been made', async function() {
+        await DAI.approve(smartFundUSD.address, 100, { from: userOne })
+        await smartFundUSD.deposit(100, { from: userOne })
+        assert.equal(await smartFundUSD.calculateAddressProfit(userOne), 0)
+        assert.equal(await smartFundUSD.calculateFundProfit(), 0)
+    })
+
+    it('should accurately calculate profit if price stays stable', async function() {
+        // give portal some money
+        await xxxERC.transfer(exchangePortal.address, 1000)
+
+        // deposit in fund
+        await DAI.approve(smartFundUSD.address, 100, { from: userOne })
+        await smartFundUSD.deposit(100, { from: userOne })
+
+        // make a trade with the fund
+        await smartFundUSD.trade(DAI.address, 100, xxxERC.address, 0, [], "0x",{
+          from: userOne,
+        })
+
+        // check that we still haven't made a profit
+        assert.equal(await smartFundUSD.calculateAddressProfit(userOne), 0)
+        assert.equal(await smartFundUSD.calculateFundProfit(), 0)
+    })
+
+    it('should accurately calculate profit upon price rise', async function() {
+        // give portal some money
+        await xxxERC.transfer(exchangePortal.address, 1000)
+
+        // deposit in fund
+        await DAI.approve(smartFundUSD.address, 100, { from: userOne })
+        await smartFundUSD.deposit(100, { from: userOne })
+
+        // make a trade with the fund
+        await smartFundUSD.trade(DAI.address, 100, xxxERC.address, 0, [], "0x",{
+          from: userOne,
+        })
+
+        // change the rate (making a profit)
+        await exchangePortal.setRatio(1, 2)
+
+        // check that we have made a profit
+        assert.equal(await smartFundUSD.calculateAddressProfit(userOne), 100)
+        assert.equal(await smartFundUSD.calculateFundProfit(), 100)
+    })
+
+    it('should accurately calculate profit upon price fall', async function() {
+        // give portal some money
+        await xxxERC.transfer(exchangePortal.address, 1000)
+
+        // deposit in fund
+        await DAI.approve(smartFundUSD.address, 100, { from: userOne })
+        await smartFundUSD.deposit(100, { from: userOne })
+
+        // Trade 100 eth for 100 bat via kyber
+        await smartFundUSD.trade(DAI.address, 100, xxxERC.address, 0, [], "0x", {
+          from: userOne,
+        })
+
+        // change the rate to make a loss (2 tokens is 1 ether)
+        await exchangePortal.setRatio(2, 1)
+
+        // check that we made negatove profit
+        assert.equal(await smartFundUSD.calculateAddressProfit(userOne), -50)
+        assert.equal(await smartFundUSD.calculateFundProfit(), -50)
+    })
+
+    it('should accurately calculate profit if price stays stable with multiple trades', async function() {
+        // give exchange portal contract some money
+        await xxxERC.transfer(exchangePortal.address, 1000)
+        await yyyERC.transfer(exchangePortal.address, 1000)
+
+        // deposit in fund
+        await DAI.approve(smartFundUSD.address, 100, { from: userOne })
+        await smartFundUSD.deposit(100, { from: userOne })
+
+        await smartFundUSD.trade(DAI.address, 50, yyyERC.address, 0, [], "0x", {
+          from: userOne,
+        })
+        await smartFundUSD.trade(DAI.address, 50, xxxERC.address, 0, [], "0x", {
+          from: userOne,
+        })
+
+        // check that we still haven't made a profit
+        assert.equal(await smartFundUSD.calculateFundProfit(), 0)
+        assert.equal(await smartFundUSD.calculateAddressProfit(userOne), 0)
+    })
+
     it('Fund manager should be able to withdraw after investor withdraws', async function() {
         // give exchange portal contract some money
         await xxxERC.transfer(exchangePortal.address, toWei(String(50)))

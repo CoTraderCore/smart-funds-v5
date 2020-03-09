@@ -37,7 +37,7 @@ contract('SmartFundETH', function([userOne, userTwo, userThree]) {
       toWei(String(100000000))
     )
 
-    // Deploy xxx Token
+    // Deploy yyy Token
     yyyERC = await Token.new(
       "yyyERC20",
       "yyy",
@@ -126,6 +126,13 @@ contract('SmartFundETH', function([userOne, userTwo, userThree]) {
       const name = await xxxERC.name()
       const totalSupply = await xxxERC.totalSupply()
       assert.equal(name, "xxxERC20")
+      assert.equal(totalSupply, toWei(String(100000000)))
+    })
+
+    it('Correct init yyy token', async function() {
+      const name = await yyyERC.name()
+      const totalSupply = await yyyERC.totalSupply()
+      assert.equal(name, "yyyERC20")
       assert.equal(totalSupply, toWei(String(100000000)))
     })
 
@@ -296,9 +303,6 @@ contract('SmartFundETH', function([userOne, userTwo, userThree]) {
         assert.equal(await smartFundETH.calculateFundProfit(), 0)
         assert.equal(await smartFundETH.calculateAddressProfit(userOne), 0)
     })
-
-  /// OLD
-
 
     it('Fund manager should be able to withdraw after investor withdraws', async function() {
         // give exchange portal contract some money
