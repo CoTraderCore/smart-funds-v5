@@ -167,19 +167,29 @@ contract SmartFundCore is SmartFundOverrideInterface, Ownable, ERC20 {
   * @param _mul                The numerator
   * @param _div                The denominator
   * @param _withdrawAddress    Address to send the tokens/ether to
+  *
+  * NOTE: _withdrawAddress changed from address to address[] arrays because balance calculation should be performed
+  * once for all usesr who wants to withdraw from the current balance.
+  *
   */
-  function _withdraw(uint256 _mul, uint256 _div, address _withdrawAddress) internal returns (uint256) {
-    for (uint256 i = 1; i < tokenAddresses.length; i++) {
+  function _withdraw(uint256[] _mul, uint256[] _div, address[] memory _withdrawAddress) internal returns (uint256) {
+    for (uint8 i = 1; i < tokenAddresses.length; i++) {
       // Transfer that _mul/_div of each token we hold to the user
       ERC20 token = ERC20(tokenAddresses[i]);
       uint256 fundAmount = token.balanceOf(address(this));
-      uint256 payoutAmount = fundAmount.mul(_mul).div(_div);
 
-      token.transfer(_withdrawAddress, payoutAmount);
+      // Transfer ERC20 to _withdrawAddress
+      for(uint8 j = 0; j < _withdrawAddress.length; j++){
+        uint256 payoutAmount = fundAmount.mul(_mul[j]).div(_div[j]);
+        token.transfer(_withdrawAddress[j], payoutAmount);
+      }
     }
-    // Transfer ether to _withdrawAddress
-    uint256 etherPayoutAmount = (address(this).balance).mul(_mul).div(_div);
-    _withdrawAddress.transfer(etherPayoutAmount);
+     uint256 etherBalance = address(this).balance;
+     // Transfer ETH to _withdrawAddress
+     for(uint8 k = 0; k < _withdrawAddress.length; k++){
+       uint256 etherPayoutAmount = (etherBalance).mul(_mul[k]).div(_div[k]);
+       _withdrawAddress[k].transfer(etherPayoutAmount);
+     }
   }
 
   /**
@@ -205,7 +215,18 @@ contract SmartFundCore is SmartFundOverrideInterface, Ownable, ERC20 {
 
     uint256 withdrawShares = numberOfWithdrawShares.mul(fundValue.sub(fundManagerCut)).div(fundValue);
 
-    _withdraw(withdrawShares, totalShares, msg.sender);
+    // prepare call data for _withdarw
+    address[] memory spenders = new address[](1);
+    spenders[0] = msg.sender;
+
+    uint256[] memory value = new uint256[](1);
+    value[0] = totalShares;
+
+    uint256[] memory cut = new uint256[](1);
+    cut[0] = withdrawShares;
+
+    // do withdraw
+    _withdraw(cut, value, spenders);
 
     // Store the value we are withdrawing in ether
     uint256 valueWithdrawn = fundValue.mul(withdrawShares).div(totalShares);
@@ -562,9 +583,23 @@ contract SmartFundCore is SmartFundOverrideInterface, Ownable, ERC20 {
 
     uint256 platformCut = (platformFee == 0) ? 0 : fundManagerCut.mul(platformFee).div(TOTAL_PERCENTAGE);
 
-    _withdraw(platformCut, fundValue, platformAddress);
-    _withdraw(fundManagerCut - platformCut, fundValue, msg.sender);
+    // prepare call data for _withdarw
+    address[] memory spenders = new address[](2);
+    spenders[0] = platformAddress;
+    spenders[1] = owner;
 
+    uint256[] memory value = new uint256[](2);
+    value[0] = fundValue;
+    value[1] = fundValue;
+
+    uint256[] memory cut = new uint256[](2);
+    cut[0] = platformCut;
+    cut[1] = fundManagerCut - platformCut;
+
+    // do withdraw
+    _withdraw(cut, value, spenders);
+
+    // add report
     fundManagerCashedOut = fundManagerCashedOut.add(fundManagerCut);
   }
 
