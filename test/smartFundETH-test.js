@@ -121,51 +121,42 @@ contract('SmartFundETH', function([userOne, userTwo, userThree]) {
     await deployContracts()
   })
 
-  describe('INIT assets', function() {
-    it('Correct init xxx token', async function() {
-      const name = await xxxERC.name()
-      const totalSupply = await xxxERC.totalSupply()
-      assert.equal(name, "xxxERC20")
-      assert.equal(totalSupply, toWei(String(100000000)))
-    })
+  describe('INIT', function() {
+    it('Correct init tokens', async function() {
+      const nameX = await xxxERC.name()
+      const totalSupplyX = await xxxERC.totalSupply()
+      assert.equal(nameX, "xxxERC20")
+      assert.equal(totalSupplyX, toWei(String(100000000)))
 
-    it('Correct init yyy token', async function() {
-      const name = await yyyERC.name()
-      const totalSupply = await yyyERC.totalSupply()
-      assert.equal(name, "yyyERC20")
-      assert.equal(totalSupply, toWei(String(100000000)))
-    })
+      const nameY = await yyyERC.name()
+      const totalSupplyY = await yyyERC.totalSupply()
+      assert.equal(nameY, "yyyERC20")
+      assert.equal(totalSupplyY, toWei(String(100000000)))
 
-    it('Correct init DAIBNT token', async function() {
-      const name = await DAIBNT.name()
-      const totalSupply = await DAIBNT.totalSupply()
-      assert.equal(name, "DAI Bancor")
-      assert.equal(totalSupply, toWei(String(100000000)))
-    })
+      const nameDB = await DAIBNT.name()
+      const totalSupplyDB = await DAIBNT.totalSupply()
+      assert.equal(nameDB, "DAI Bancor")
+      assert.equal(totalSupplyDB, toWei(String(100000000)))
 
-    it('Correct init DAIUNI token', async function() {
-      const name = await DAIUNI.name()
-      const totalSupply = await DAIUNI.totalSupply()
-      assert.equal(name, "DAI Uniswap")
-      assert.equal(totalSupply, toWei(String(100000000)))
-    })
+      const nameDU = await DAIUNI.name()
+      const totalSupplyDU = await DAIUNI.totalSupply()
+      assert.equal(nameDU, "DAI Uniswap")
+      assert.equal(totalSupplyDU, toWei(String(100000000)))
 
-    it('Correct init cToken token', async function() {
-      const name = await cToken.name()
-      const totalSupply = await cToken.totalSupply()
+      const nameCT = await cToken.name()
+      const totalSupplyCT = await cToken.totalSupply()
       const underlying = await cToken.underlying()
 
       assert.equal(underlying, DAI.address)
-      assert.equal(name, "Compound DAI")
-      assert.equal(totalSupply, toWei(String(100000000)))
+      assert.equal(nameCT, "Compound DAI")
+      assert.equal(totalSupplyCT, toWei(String(100000000)))
+
+      const nameCE = await cEther.name()
+      const totalSupplyCE = await cEther.totalSupply()
+      assert.equal(nameCE, "Compound Ether")
+      assert.equal(totalSupplyCE, toWei(String(100000000)))
     })
 
-    it('Correct init cEther token', async function() {
-      const name = await cEther.name()
-      const totalSupply = await cEther.totalSupply()
-      assert.equal(name, "Compound Ether")
-      assert.equal(totalSupply, toWei(String(100000000)))
-    })
 
     it('Correct init pool portal', async function() {
       const DAIUNIBNTAddress = await poolPortal.DAIUNIPoolToken()
@@ -1233,9 +1224,33 @@ contract('SmartFundETH', function([userOne, userTwo, userThree]) {
     it('should allow a user to withdraw their shares that were transfered to them', async function() {
       await smartFundETH.deposit({ from: userTwo, value: 100 })
       await smartFundETH.transfer(userThree, toWei(String(1)), { from: userTwo })
-      assert.equal((await smartFundETH.balanceOf(userThree)).toNumber(), toWei(String(1)))
+      assert.equal(await smartFundETH.balanceOf(userThree), toWei(String(1)))
       await smartFundETH.withdraw(0, { from: userThree })
-      assert.equal((await smartFundETH.balanceOf(userThree)).toNumber(), 0)
+      assert.equal(await smartFundETH.balanceOf(userThree), 0)
+    })
+  })
+
+  describe('Whitelist Investors', function() {
+    it('should not allow anyone to deposit when whitelist is empty and set', async function() {
+      await smartFundETH.setWhitelistOnly(true)
+      await smartFundETH.deposit({ from: userTwo, value: 100 }).should.be.rejectedWith(EVMRevert)
+      await smartFundETH.deposit({ from: userThree, value: 100 }).should.be.rejectedWith(EVMRevert)
+    })
+
+    it('should only allow whitelisted addresses to deposit', async function() {
+      await smartFundETH.setWhitelistOnly(true)
+      await smartFundETH.setWhitelistAddress(userOne, true)
+      await smartFundETH.deposit({ from: userOne, value: 100 })
+      await smartFundETH.deposit({ from: userTwo, value: 100 }).should.be.rejectedWith(EVMRevert)
+      await smartFundETH.setWhitelistAddress(userTwo, true)
+      await smartFundETH.deposit({ from: userTwo, value: 100 })
+      assert.equal(await smartFundETH.addressToShares.call(userOne), toWei(String(1)))
+      assert.equal(await smartFundETH.addressToShares.call(userTwo), toWei(String(1)))
+      await smartFundETH.setWhitelistAddress(userOne, false)
+      await smartFundETH.deposit({ from: userOne, value: 100 }).should.be.rejectedWith(EVMRevert)
+      await smartFundETH.setWhitelistOnly(false)
+      await smartFundETH.deposit({ from: userOne, value: 100 })
+      assert.equal(await smartFundETH.addressToShares.call(userOne), toWei(String(2)))
     })
   })
   //END
