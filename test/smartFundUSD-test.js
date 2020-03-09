@@ -16,14 +16,16 @@ const SmartFundUSD = artifacts.require('./core/funds/SmartFundUSD.sol')
 const Token = artifacts.require('./tokens/Token')
 const ExchangePortalMock = artifacts.require('./portalsMock/ExchangePortalMock')
 const PoolPortalMock = artifacts.require('./portalsMock/PoolPortalMock')
+const CoTraderDAOWalletMock = artifacts.require('./portalsMock/CoTraderDAOWalletMock')
 const CToken = artifacts.require('./compoundMock/CTokenMock')
 const CEther = artifacts.require('./compoundMock/CEtherMock')
+const ETH_TOKEN_ADDRESS = '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE'
 
-let ETH_TOKEN_ADDRESS, xxxERC, DAI, exchangePortal, smartFundUSD, cToken, cEther, BNT, DAIUNI, DAIBNT, poolPortal, yyyERC
+let xxxERC, DAI, exchangePortal, smartFundUSD, cToken, cEther, BNT, DAIUNI, DAIBNT, poolPortal, COT_DAO_WALLET, yyyERC
 
 contract('SmartFundUSD', function([userOne, userTwo, userThree]) {
   async function deployContracts(successFee=1000, platformFee=0){
-    ETH_TOKEN_ADDRESS = '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE'
+    COT_DAO_WALLET = await CoTraderDAOWalletMock.new()
 
     // Deploy xxx Token
     xxxERC = await Token.new(
@@ -99,7 +101,7 @@ contract('SmartFundUSD', function([userOne, userTwo, userThree]) {
       'TEST USD FUND',                              // string _name,
       successFee,                                   // uint256 _successFee,
       platformFee,                                  // uint256 _platformFee,
-      '0x0000000000000000000000000000000000000000', // address _platformAddress,
+      COT_DAO_WALLET.address,                       // address _platformAddress,
       exchangePortal.address,                       // address _exchangePortalAddress,
       '0x0000000000000000000000000000000000000000', // address _permittedExchangesAddress,
       '0x0000000000000000000000000000000000000000', // address _permittedPoolsAddress,
@@ -1126,5 +1128,144 @@ contract('SmartFundUSD', function([userOne, userTwo, userThree]) {
     })
   })
 
+  describe('Platform cut', function() {
+    it('Platform can get 10% from ETH profit', async function() {
+      // deploy smartFund with 10% success fee and platform fee
+      await deployContracts(1000, 1000)
+      // give exchange portal contract some money
+      await exchangePortal.pay({ from: userOne, value: toWei(String(3))})
+
+      // deposit in fund
+      await DAI.approve(smartFundUSD.address, toWei(String(1)), { from: userOne })
+      await smartFundUSD.deposit(toWei(String(1)), { from: userOne })
+
+      assert.equal(await DAI.balanceOf(smartFundUSD.address), toWei(String(1)))
+
+      // 1 DAI now 2 ETH
+      await exchangePortal.setRatio(1, 2)
+
+      await smartFundUSD.trade(
+        DAI.address,
+        toWei(String(1)),
+        ETH_TOKEN_ADDRESS,
+        0,
+        [],
+        "0x",
+        {
+          from: userOne
+        }
+      )
+
+      // 1 DAI now 1 ETH
+      await exchangePortal.setRatio(1, 1)
+
+      assert.equal(await web3.eth.getBalance(smartFundUSD.address), toWei(String(2)))
+      assert.equal(await smartFundUSD.calculateFundValue(), toWei(String(2)))
+
+      const totalWeiDeposited = await smartFundUSD.totalWeiDeposited()
+      assert.equal(fromWei(totalWeiDeposited), 1)
+
+      // user1 now withdraws 190 ether, 90 of which are profit
+      await smartFundUSD.withdraw(0, { from: userOne })
+
+      const totalWeiWithdrawn = await smartFundUSD.totalWeiWithdrawn()
+      assert.equal(fromWei(totalWeiWithdrawn), 1.9)
+
+      assert.equal(await smartFundUSD.calculateFundValue(), toWei(String(0.1)))
+
+      const {
+        fundManagerRemainingCut,
+        fundValue,
+        fundManagerTotalCut,
+      } =
+      await smartFundUSD.calculateFundManagerCut()
+
+      assert.equal(fundValue, toWei(String(0.1)))
+      assert.equal(fundManagerRemainingCut, toWei(String(0.1)))
+      assert.equal(fundManagerTotalCut, toWei(String(0.1)))
+
+      // // FM now withdraws their profit
+      await smartFundUSD.fundManagerWithdraw({ from: userOne })
+
+      // Platform get 10%
+      assert.equal(fromWei(await web3.eth.getBalance(COT_DAO_WALLET.address)), 0.01)
+
+      // Fund transfer all balance
+      assert.equal(fromWei(await web3.eth.getBalance(smartFundUSD.address)), 0)
+    })
+
+    it('Platform can get 10% from ERC profit', async function() {
+      // deploy smartFund with 10% success fee and platform fee
+      await deployContracts(1000, 1000)
+      // give exchange portal contract some money
+      await xxxERC.transfer(exchangePortal.address, toWei(String(50)))
+      await exchangePortal.pay({ from: userOne, value: toWei(String(3))})
+
+      // deposit in fund
+      await DAI.approve(smartFundUSD.address, toWei(String(1)), { from: userOne })
+      await smartFundUSD.deposit(toWei(String(1)), { from: userOne })
+
+      assert.equal(await DAI.balanceOf(smartFundUSD.address), toWei(String(1)))
+
+      // 1 token is now cost 1 DAI
+      await exchangePortal.setRatio(1, 1)
+
+      await smartFundUSD.trade(
+        DAI.address,
+        toWei(String(1)),
+        xxxERC.address,
+        0,
+        [],
+        "0x",
+        {
+          from: userOne
+        }
+      )
+
+      assert.equal(await DAI.balanceOf(smartFundUSD.address), 0)
+
+      assert.equal(await smartFundUSD.calculateFundValue(), toWei(String(1)))
+
+      // 1 token is now worth 2 DAI
+      await exchangePortal.setRatio(1, 2)
+
+      assert.equal(await smartFundUSD.calculateFundValue(), toWei(String(2)))
+
+      assert.equal(await DAI.balanceOf(smartFundUSD.address), toWei(String(0)))
+      assert.equal(await xxxERC.balanceOf(smartFundUSD.address), toWei(String(1)))
+
+      const totalWeiDeposited = await smartFundUSD.totalWeiDeposited()
+      assert.equal(fromWei(totalWeiDeposited), 1)
+
+      // user1 now withdraws 190 ether, 90 of which are profit
+      await smartFundUSD.withdraw(0, { from: userOne })
+
+      const totalWeiWithdrawn = await smartFundUSD.totalWeiWithdrawn()
+      assert.equal(fromWei(totalWeiWithdrawn), 1.9)
+
+      assert.equal(await smartFundUSD.calculateFundValue(), toWei(String(0.1)))
+
+      const {
+        fundManagerRemainingCut,
+        fundValue,
+        fundManagerTotalCut,
+      } =
+      await smartFundUSD.calculateFundManagerCut()
+
+      assert.equal(fundValue, toWei(String(0.1)))
+      assert.equal(fundManagerRemainingCut, toWei(String(0.1)))
+      assert.equal(fundManagerTotalCut, toWei(String(0.1)))
+
+      // // FM now withdraws their profit
+      await smartFundUSD.fundManagerWithdraw({ from: userOne })
+
+      // Platform get 10%
+      // 0.005 xxx = 0.01 ETH
+      assert.equal(fromWei(await xxxERC.balanceOf(COT_DAO_WALLET.address)), 0.005)
+
+      // Fund transfer all balance
+      assert.equal(fromWei(await xxxERC.balanceOf(smartFundUSD.address)), 0)
+    })
+  })
   // END
 })

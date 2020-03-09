@@ -1219,6 +1219,5 @@ contract('SmartFundETH', function([userOne, userTwo, userThree]) {
       assert.equal(fromWei(await xxxERC.balanceOf(smartFundETH.address)), 0)
     })
   })
-
   //END
 })
