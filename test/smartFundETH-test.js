@@ -1219,5 +1219,24 @@ contract('SmartFundETH', function([userOne, userTwo, userThree]) {
       assert.equal(fromWei(await xxxERC.balanceOf(smartFundETH.address)), 0)
     })
   })
+
+  describe('ERC20 implementation', function() {
+    it('should be able to transfer shares to another user', async function() {
+      await smartFundETH.deposit({ from: userTwo, value: 100 })
+      assert.equal(await smartFundETH.balanceOf(userTwo), toWei(String(1)))
+
+      await smartFundETH.transfer(userThree, toWei(String(1)), { from: userTwo })
+      assert.equal(await smartFundETH.balanceOf(userThree), toWei(String(1)))
+      assert.equal(await smartFundETH.balanceOf(userTwo), 0)
+    })
+
+    it('should allow a user to withdraw their shares that were transfered to them', async function() {
+      await smartFundETH.deposit({ from: userTwo, value: 100 })
+      await smartFundETH.transfer(userThree, toWei(String(1)), { from: userTwo })
+      assert.equal((await smartFundETH.balanceOf(userThree)).toNumber(), toWei(String(1)))
+      await smartFundETH.withdraw(0, { from: userThree })
+      assert.equal((await smartFundETH.balanceOf(userThree)).toNumber(), 0)
+    })
+  })
   //END
 })
