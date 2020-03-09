@@ -4,15 +4,7 @@
 ```
 1) Add Compound loan
 2) Add Uniswap pools
-```
-
-# Core unit tests todo
-```
-0 write mocks for Uniswap, Bancor, Compound, DAOWallet
-1 trade/withdraw Compound tokens
-2 trade/withdraw Bancor and Uniswap pools
-3 cut 10% from manager profit to DAOWallet
-4 test trade/withdraw for all available assets
+3) Add distribute 10% from manager profit 50% burn, 25%, stake, 25% to team
 ```
 
 # Run tests
