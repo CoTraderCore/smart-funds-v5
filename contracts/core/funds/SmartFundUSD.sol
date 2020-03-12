@@ -131,7 +131,7 @@ contract SmartFundUSD is SmartFundUSDInterface, SmartFundAdvanced {
 
     // Calculate value for ERC20
     // Sub cTokens + ETH + Current USD token
-    uint cTokensUSDAndETHlength = compoundTokenAddresses.length + 2;
+    uint cTokensUSDAndETHlength = compoundCTokensLength() + 2;
     address[] memory fromAddresses = new address[](tokenAddresses.length - cTokensUSDAndETHlength);
     uint256[] memory amounts = new uint256[](tokenAddresses.length - cTokensUSDAndETHlength);
     uint8 ercIndex = 0;

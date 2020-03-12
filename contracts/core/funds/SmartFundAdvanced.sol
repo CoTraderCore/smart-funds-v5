@@ -208,8 +208,15 @@ contract SmartFundAdvanced is SmartFundCore {
     }
   }
 
-  // return length of all Compound tokens
-  function compoundTokenAddressesLength() public view returns(uint){
-    return compoundTokenAddresses.length;
+  // return length of all trade available Compound tokens in fund
+  function compoundCTokensLength() public view returns(uint){
+    uint8 count;
+    for (uint8 i = 1; i < tokenAddresses.length; i++) {
+      if(isCTOKEN[tokenAddresses[i]])
+        count++;
+    }
+
+    return count;
   }
+
 }

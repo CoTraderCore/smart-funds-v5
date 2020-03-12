@@ -779,7 +779,7 @@ contract('SmartFundUSD', function([userOne, userTwo, userThree]) {
       await smartFundUSD.compoundMint(toWei(String(0.5)), cToken.address)
       // mint DAI Ctoken
       await smartFundUSD.compoundMint(toWei(String(0.5)), cToken.address)
-      assert.equal(await smartFundUSD.compoundTokenAddressesLength(), 1)
+      assert.equal(await smartFundUSD.compoundCTokensLength(), 1)
     })
 
     it('Fund Manager can mint and reedem CEther', async function() {

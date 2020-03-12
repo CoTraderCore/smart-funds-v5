@@ -102,7 +102,7 @@ contract SmartFundETH is SmartFundETHInterface, SmartFundAdvanced {
 
     // Calculate value for ERC20
     // Sub cTokens + ETH
-    uint cTokensAndETHlength = compoundTokenAddresses.length + 1;
+    uint cTokensAndETHlength = compoundCTokensLength() + 1;
     address[] memory fromAddresses = new address[](tokenAddresses.length - cTokensAndETHlength);
     uint256[] memory amounts = new uint256[](tokenAddresses.length - cTokensAndETHlength);
     uint8 ercIndex = 0;
