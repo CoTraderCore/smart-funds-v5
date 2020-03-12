@@ -841,6 +841,61 @@ contract('SmartFundUSD', function([userOne, userTwo, userThree]) {
     })
 
 
+    it('Compound assets works correct with ERC20 assests', async function() {
+      assert.equal(await cToken.balanceOf(smartFundUSD.address), 0)
+      // give exchange portal contract some money
+      await xxxERC.transfer(exchangePortal.address, toWei(String(10)))
+
+      // deposit in fund
+      await DAI.approve(smartFundUSD.address, toWei(String(3)), { from: userOne })
+      await smartFundUSD.deposit(toWei(String(3)), { from: userOne })
+
+      // mint
+      await smartFundUSD.compoundMint(toWei(String(1)), cToken.address)
+      assert.equal(await cToken.balanceOf(smartFundUSD.address), toWei(String(1)))
+
+      await smartFundUSD.trade(
+        DAI.address,
+        toWei(String(1)),
+        xxxERC.address,
+        0,
+        [],
+        "0x",
+        {
+          from: userOne,
+        }
+      )
+      assert.equal(await xxxERC.balanceOf(smartFundUSD.address), toWei(String(1)))
+
+      // Total should be the same
+      assert.equal(await smartFundUSD.calculateFundValue(), toWei(String(3)))
+
+      // reedem
+      await smartFundUSD.compoundRedeemByPercent(100, cToken.address)
+
+      // remove cToken from fund
+      await smartFundUSD.removeToken(cToken.address, 2)
+
+      // Total should be the same
+      assert.equal(await smartFundUSD.calculateFundValue(), toWei(String(3)))
+
+      // mint
+      await smartFundUSD.compoundMint(toWei(String(1)), cToken.address)
+      assert.equal(await cToken.balanceOf(smartFundUSD.address), toWei(String(1)))
+
+      // Total should be the same
+      assert.equal(await smartFundUSD.calculateFundValue(), toWei(String(3)))
+
+      await smartFundUSD.withdraw(0)
+
+      // check balance
+      assert.equal(await web3.eth.getBalance(smartFundUSD.address), 0)
+      assert.equal(await smartFundUSD.calculateFundValue(), 0)
+      // investor get cToken
+      assert.equal(await cToken.balanceOf(userOne), toWei(String(1)))
+    })
+
+
     it('Calculate fund value and withdraw with Compound assests', async function() {
       // send some ETH to exchnage portal
       await exchangePortal.pay({ from: userOne, value: toWei(String(2))})

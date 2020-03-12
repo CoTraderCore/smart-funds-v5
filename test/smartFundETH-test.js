@@ -777,7 +777,7 @@ contract('SmartFundETH', function([userOne, userTwo, userThree]) {
     })
 
 
-    it('Compound assets work correct with ERC20 assest', async function() {
+    it('Compound assets works correct with ERC20 assests', async function() {
       assert.equal(await cEther.balanceOf(smartFundETH.address), 0)
       // give exchange portal contract some money
       await xxxERC.transfer(exchangePortal.address, toWei(String(10)))
