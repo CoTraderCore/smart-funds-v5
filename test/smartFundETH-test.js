@@ -777,6 +777,59 @@ contract('SmartFundETH', function([userOne, userTwo, userThree]) {
     })
 
 
+    it('Compound assets work correct with ERC20 assest', async function() {
+      assert.equal(await cEther.balanceOf(smartFundETH.address), 0)
+      // give exchange portal contract some money
+      await xxxERC.transfer(exchangePortal.address, toWei(String(10)))
+
+      // deposit in fund
+      await smartFundETH.deposit({ from: userOne, value: toWei(String(3)) })
+      // mint
+      await smartFundETH.compoundMint(toWei(String(1)), cEther.address)
+      assert.equal(await cEther.balanceOf(smartFundETH.address), toWei(String(1)))
+
+      await smartFundETH.trade(
+        ETH_TOKEN_ADDRESS,
+        toWei(String(1)),
+        xxxERC.address,
+        0,
+        [],
+        "0x",
+        {
+          from: userOne,
+        }
+      )
+      assert.equal(await xxxERC.balanceOf(smartFundETH.address), toWei(String(1)))
+
+      // Total should be the same
+      assert.equal(await smartFundETH.calculateFundValue(), toWei(String(3)))
+
+      // reedem
+      await smartFundETH.compoundRedeemByPercent(100, cEther.address)
+
+      // remove cToken from fund
+      await smartFundETH.removeToken(cEther.address, 1)
+
+      // Total should be the same
+      assert.equal(await smartFundETH.calculateFundValue(), toWei(String(3)))
+
+      // mint
+      await smartFundETH.compoundMint(toWei(String(1)), cEther.address)
+      assert.equal(await cEther.balanceOf(smartFundETH.address), toWei(String(1)))
+
+      // Total should be the same
+      assert.equal(await smartFundETH.calculateFundValue(), toWei(String(3)))
+
+      await smartFundETH.withdraw(0)
+
+      // check balance
+      assert.equal(await web3.eth.getBalance(smartFundETH.address), 0)
+      assert.equal(await smartFundETH.calculateFundValue(), 0)
+      // investor get cToken
+      assert.equal(await cEther.balanceOf(userOne), toWei(String(1)))
+    })
+
+
     it('Calculate fund value and withdraw with Compound assests', async function() {
       // send some DAI to exchnage portal
       DAI.transfer(exchangePortal.address, toWei(String(2)))
