@@ -770,6 +770,18 @@ contract('SmartFundUSD', function([userOne, userTwo, userThree]) {
   })
 
   describe('COMPOUND', function() {
+    it('Correct cToken length', async function() {
+      assert.equal(await cEther.balanceOf(smartFundUSD.address), 0)
+      // deposit in fund
+      await DAI.approve(smartFundUSD.address, toWei(String(1)), { from: userOne })
+      await smartFundUSD.deposit(toWei(String(1)), { from: userOne })
+      // mint DAI Ctoken
+      await smartFundUSD.compoundMint(toWei(String(0.5)), cToken.address)
+      // mint DAI Ctoken
+      await smartFundUSD.compoundMint(toWei(String(0.5)), cToken.address)
+      assert.equal(await smartFundUSD.compoundTokenAddressesLength(), 1)
+    })
+
     it('Fund Manager can mint and reedem CEther', async function() {
       assert.equal(await cEther.balanceOf(smartFundUSD.address), 0)
 

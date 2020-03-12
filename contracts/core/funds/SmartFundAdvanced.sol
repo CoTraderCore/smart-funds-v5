@@ -73,12 +73,10 @@ contract SmartFundAdvanced is SmartFundCore {
     if(_cToken == address(cEther)){
       // mint cETH
       cEther.mint.value(_amount)();
-      // Add cEther
+      // Add token to ERC list
       _addToken(address(cEther));
-      // Mark this tokens as Ctoken
-      isCTOKEN[address(cEther)] = true;
-      // Add compound token
-      compoundTokenAddresses.push(address(cEther));
+      // Add to c token list
+      _addCompoundToken(address(cEther));
     }else{
       CToken cToken = CToken(_cToken);
       address underlyingAddress = cToken.underlying();
@@ -87,10 +85,8 @@ contract SmartFundAdvanced is SmartFundCore {
       cToken.mint(_amount);
       // Add cToken
       _addToken(_cToken);
-      // Mark this tokens as Ctoken
-      isCTOKEN[_cToken] = true;
-      // Add compound token
-      compoundTokenAddresses.push(_cToken);
+      // Add to c token list
+      _addCompoundToken(_cToken);
     }
   }
 
@@ -201,5 +197,19 @@ contract SmartFundAdvanced is SmartFundCore {
     else{
       return 0;
     }
+  }
+
+  function _addCompoundToken(address _cToken) private {
+    if(!isCTOKEN[_cToken]){
+      // Mark this tokens as Ctoken
+      isCTOKEN[_cToken] = true;
+      // Add compound token
+      compoundTokenAddresses.push(_cToken);
+    }
+  }
+
+  // return length of all Compound tokens
+  function compoundTokenAddressesLength() public view returns(uint){
+    return compoundTokenAddresses.length;
   }
 }
