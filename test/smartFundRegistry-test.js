@@ -15,7 +15,7 @@ require('chai')
 const SmartFundETHFactory = artifacts.require('./core/funds/SmartFundETHFactory.sol')
 const SmartFundUSDFactory = artifacts.require('./core/funds/SmartFundUSDFactory.sol')
 const SmartFundRegistry = artifacts.require('./core/SmartFundRegistry.sol')
-const CoTraderDAOWalletMock = artifacts.require('./portalsMock/CoTraderDAOWalletMock')
+const CoTraderDAOWalletMock = artifacts.require('./CoTraderDAOWalletMock')
 
 contract('SmartFundRegistry', function([userOne, userTwo, userThree]) {
   beforeEach(async function() {
