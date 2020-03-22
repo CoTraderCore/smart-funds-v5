@@ -13,8 +13,6 @@ contract SmartFundUSD is SmartFundUSDInterface, SmartFundAdvanced {
   using SafeMath for uint256;
   using SafeERC20 for ERC20;
 
-  uint public version = 4;
-
   // Address of stable coin can be set in constructor and changed via function
   address public stableCoinAddress;
 
