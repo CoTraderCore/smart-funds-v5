@@ -22,7 +22,7 @@ NOTE: in separate console
 ```
 SmartFundRegistry
 
-0xc8A6346133289ef7a7C104c1Dc70E1dA43A62Cc6
+0xD990B951F791f58E7548088f9C1D995cA1A39153
 
 
 Stake
@@ -47,7 +47,7 @@ SmartFundETHFactory
 
 SmartFundUSDFactory
 
-0xfc25e551D2b8E492ba94818cA7de3F57B5B8A974
+0x6073160aBd820b555DC58de9B4C83B5ac72C3e27
 
 
 PermittedPools
