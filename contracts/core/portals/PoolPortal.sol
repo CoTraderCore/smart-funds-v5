@@ -368,12 +368,12 @@ contract PoolPortal {
     bancorAmount = bancorFormula.calculateFundCost(
       _relay.totalSupply(),
       bntBalance,
-      100,
+      1000000,
        _amount);
     connectorAmount = bancorFormula.calculateFundCost(
       _relay.totalSupply(),
       ercBalance,
-      100,
+      1000000,
        _amount);
   }
 
