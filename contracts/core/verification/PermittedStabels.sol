@@ -6,7 +6,7 @@ import "../../zeppelin-solidity/contracts/ownership/Ownable.sol";
   The PermittedPools contract determines which addresses are permitted
 */
 contract PermittedStabels is Ownable {
-  event NewStableCoinEnabled(address newCoin, bool enabled);
+  event NewPoolsEnabled(address newPools, bool enabled);
   // Mapping to permitted stable coin addresses
   mapping (address => bool) public permittedAddresses;
 
@@ -25,7 +25,7 @@ contract PermittedStabels is Ownable {
   *
   * @param _newAddress    The new address to permit
   */
-  function addNewStableAddress(address _newAddress) public onlyOwner {
+  function addNewPoolAddress(address _newAddress) public onlyOwner {
     // Set the stable coin as permitted
     _enableAddress(_newAddress, true);
   }
@@ -49,6 +49,6 @@ contract PermittedStabels is Ownable {
   function _enableAddress(address _newAddress, bool _enabled) private {
     permittedAddresses[_newAddress] = _enabled;
 
-    emit NewStableCoinEnabled(_newAddress, _enabled);
+    emit NewPoolsEnabled(_newAddress, _enabled);
   }
 }
